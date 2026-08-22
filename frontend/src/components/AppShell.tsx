@@ -22,6 +22,7 @@ export function AppShell() {
           <NavLink to="/">Overview</NavLink>
           <NavLink to="/upload">Upload</NavLink>
           <NavLink to="/search">Search</NavLink>
+          <NavLink to="/manage">Manage</NavLink>
         </nav>
         <div className="account">
           <span title={user?.username}>Signed in</span>

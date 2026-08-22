@@ -60,5 +60,16 @@ Temporary query images use their own short-lived signed upload flow. They are
 never inserted into media/dedup records and the ML Lambda deletes the object in
 `finally` on success or failure.
 
+## Management and notifications
+
+The management workspace can search and select ready media or accept stable
+file IDs/assignment URLs directly. It supports owner-authorized bulk add/remove
+of manual tags, complete deletion of originals/thumbnails/metadata/dedup state,
+and per-item outcomes. Permanent deletion requires an explicit confirmation.
+
+Notification watches use the verified Cognito email claim and 1–20 normalized
+tags. `PENDING` is shown honestly until the recipient confirms the AWS SNS
+email. Removing the external SNS subscription also requires confirmation.
+
 Feature-specific pages and their tests are documented by the cumulative
 Stage 5 reports in `docs/stages/`.

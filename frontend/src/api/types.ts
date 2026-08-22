@@ -61,6 +61,36 @@ export type TemporaryQueryResponse = QueryResponse & {
   model_version: string | null;
 };
 
+export type TagEditResponse = {
+  operation: 0 | 1;
+  changed_tags: Record<string, string[]>;
+  media: MediaRecord[];
+};
+
+export type DeleteOutcome = {
+  identifier: string;
+  file_id: string | null;
+  deleted: boolean;
+  already_absent: boolean;
+  error_code: string | null;
+};
+
+export type DeleteResponse = {
+  complete: boolean;
+  outcomes: DeleteOutcome[];
+};
+
+export type Subscription = {
+  email: string;
+  tags: string[];
+  status: "PENDING" | "CONFIRMED" | "DELETED";
+  updated_at: string;
+};
+
+export type SubscriptionLookup = {
+  subscription: Subscription | null;
+};
+
 export type ApiErrorBody = {
   error?: {
     code?: string;

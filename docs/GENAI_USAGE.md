@@ -40,6 +40,10 @@ limited.
   minimum-count AND search, species/manual-tag search, thumbnail-to-original
   lookup, ephemeral image inference with signed upload and cleanup-aware
   messaging, plus complete/empty/truncated result states.
+- Completed the Stage 5.4 owner-management and notification UI with selectable
+  bulk tag changes, explicit-confirmation complete deletion, per-item outcomes,
+  verified-Cognito-email SNS watch creation/status/removal, and automated tests
+  for destructive gating and honest pending status.
 
 ## Human accountability
 

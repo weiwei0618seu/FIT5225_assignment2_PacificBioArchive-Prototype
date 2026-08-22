@@ -6,6 +6,7 @@ import { LoadingScreen } from "./components/LoadingScreen";
 import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
+import { ManagePage } from "./pages/ManagePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SearchPage } from "./pages/SearchPage";
 import { UploadPage } from "./pages/UploadPage";
@@ -32,6 +33,7 @@ export function AppRoutes() {
             <Route index element={<DashboardPage />} />
             <Route path="upload" element={<UploadPage />} />
             <Route path="search" element={<SearchPage />} />
+            <Route path="manage" element={<ManagePage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

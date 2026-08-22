@@ -1,8 +1,12 @@
 import { idToken } from "../auth/authClient";
 import type {
   ApiErrorBody,
+  DeleteResponse,
   MediaRecord,
   QueryResponse,
+  Subscription,
+  SubscriptionLookup,
+  TagEditResponse,
   TemporaryQueryResponse,
   TemporaryQueryTicket,
   ThumbnailLookup,
@@ -106,6 +110,49 @@ export function executeTemporaryQuery(ticket: TemporaryQueryTicket): Promise<Tem
     method: "POST",
     body: JSON.stringify({ temp_key: ticket.temp_key }),
   });
+}
+
+type MediaIdentifiers = { fileIds?: string[]; urls?: string[] };
+
+export function editMediaTags(
+  identifiers: MediaIdentifiers,
+  tags: string[],
+  operation: 0 | 1,
+): Promise<TagEditResponse> {
+  return apiRequest<TagEditResponse>("/media/tags", {
+    method: "POST",
+    body: JSON.stringify({
+      file_ids: identifiers.fileIds || [],
+      urls: identifiers.urls || [],
+      tags,
+      operation,
+    }),
+  });
+}
+
+export function deleteMedia(identifiers: MediaIdentifiers): Promise<DeleteResponse> {
+  return apiRequest<DeleteResponse>("/media/delete", {
+    method: "POST",
+    body: JSON.stringify({ file_ids: identifiers.fileIds || [], urls: identifiers.urls || [] }),
+  });
+}
+
+export function getNotificationSubscription(): Promise<SubscriptionLookup> {
+  return apiRequest<SubscriptionLookup>("/notifications/subscription");
+}
+
+export function setNotificationSubscription(tags: string[]): Promise<Subscription> {
+  return apiRequest<Subscription>("/notifications/subscription", {
+    method: "POST",
+    body: JSON.stringify({ tags }),
+  });
+}
+
+export async function deleteNotificationSubscription(): Promise<boolean> {
+  const response = await apiRequest<{ deleted: boolean }>("/notifications/subscription", {
+    method: "DELETE",
+  });
+  return response.deleted;
 }
 
 export function putPresignedFile(
