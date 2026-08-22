@@ -98,4 +98,3 @@ Never copy tokens, credentials, email codes, OAuth values, pre-signed URLs or
 unredacted user data into Git, screenshots, terminal transcripts or chat. The
 acceptance script intentionally emits only pass/fail labels. Any screenshots
 must be reviewed and cropped/redacted before they become assessment evidence.
-

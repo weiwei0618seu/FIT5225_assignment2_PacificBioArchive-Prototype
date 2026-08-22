@@ -114,4 +114,3 @@ account action under the project instructions, not a deployment or code claim.
    confirmations.
 4. Save only sanitized evidence, update this report and the HD rubric audit,
    rerun every gate, commit and push.
-
