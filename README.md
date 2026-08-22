@@ -5,12 +5,13 @@ serverless wildlife media platform. It will support image/video upload,
 checksum deduplication, thumbnail generation, ML species tagging, tag/count
 queries, bulk tag editing, deletion, email notifications, and a complete web UI.
 
-## Current branch
+## Cumulative stage branches
 
-`stage-0-baseline` preserves the supplied ML assets and test images before they
-are refactored. The original script is intentionally retained under
-`legacy/PacificBioArchive/`; known limitations are documented in
-`docs/stages/STAGE_0_REPORT.md`.
+Every `stage-X.Y-*` branch contains the complete passing project state through
+that stage. `stage-0-baseline` preserves the supplied assets; later branches add
+the reusable ML/media/domain/AWS/API layers in the order documented by
+`docs/MASTER_PLAN.md`. The original script remains under
+`legacy/PacificBioArchive/` for traceability.
 
 ## Repository safety
 
@@ -20,4 +21,3 @@ are refactored. The original script is intentionally retained under
 - AWS deployment results will only be reported after they are actually tested.
 
 See `docs/MASTER_PLAN.md` for the complete implementation sequence.
-

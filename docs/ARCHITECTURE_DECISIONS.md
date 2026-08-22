@@ -58,3 +58,18 @@ counts would repeatedly count the same stationary animal. The system records
 the maximum accepted count per species in any sampled second and records sample
 metadata separately.
 
+## ADR-011 — Cognito managed login, PKCE and Google federation
+
+The browser is a public OAuth client, so it has no client secret and uses the
+authorization-code flow with PKCE. Native registration and Google both terminate
+at Cognito; API Gateway therefore validates one issuer/audience pair. Google
+client credentials are mandatory `NoEcho` deployment inputs for the HD build
+and never become Lambda or frontend environment variables.
+
+## ADR-012 — Separate least-privilege Lambda roles
+
+The core API, upload processor and temporary-query ML function have different
+data paths, so each receives its own role. Inline policies name exact table,
+topic and S3-prefix ARNs. The only wildcard suffix is beneath a configured
+object prefix or SNS topic subscription namespace; there is no star action or
+global star resource.

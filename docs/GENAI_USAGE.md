@@ -24,6 +24,10 @@ limited.
 - Implemented Stage 4.1 HTTP API v2 parsing, claim propagation, safe error
   contracts, complete REST routing and isolated temporary-query ML execution;
   tested every route family plus authentication, cleanup and error redaction.
+- Implemented and linted the Stage 4.2 Cognito/Google/OAuth and least-privilege
+  IAM CloudFormation subtemplate, with automated assertions for registration,
+  verification, PKCE-compatible client settings, secret handling and role
+  separation.
 
 ## Human accountability
 

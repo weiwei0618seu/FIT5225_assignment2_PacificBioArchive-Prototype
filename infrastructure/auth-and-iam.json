@@ -1,0 +1,212 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Pacific BioArchive Cognito, Google federation, and least-privilege Lambda roles",
+  "Parameters": {
+    "Environment": {
+      "Type": "String",
+      "AllowedValues": ["prototype", "demo"],
+      "Default": "prototype"
+    },
+    "HostedUiDomainPrefix": {
+      "Type": "String",
+      "AllowedPattern": "^[a-z0-9-]{8,63}$",
+      "Description": "Globally unique Cognito managed-login domain prefix"
+    },
+    "CallbackUrls": {
+      "Type": "CommaDelimitedList",
+      "Description": "Exact HTTPS callback URLs plus localhost only for development"
+    },
+    "LogoutUrls": {
+      "Type": "CommaDelimitedList",
+      "Description": "Exact HTTPS sign-out URLs plus localhost only for development"
+    },
+    "GoogleClientId": {
+      "Type": "String",
+      "NoEcho": true,
+      "MinLength": 1
+    },
+    "GoogleClientSecret": {
+      "Type": "String",
+      "NoEcho": true,
+      "MinLength": 1
+    },
+    "MediaBucketArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:s3:::[A-Za-z0-9.-]+$"},
+    "ModelBucketArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:s3:::[A-Za-z0-9.-]+$"},
+    "MediaTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
+    "DedupTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
+    "SubscriptionsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
+    "NotificationEventsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
+    "NotificationTopicArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:sns:[^:]+:[0-9]+:.+$"}
+  },
+  "Resources": {
+    "UserPool": {
+      "Type": "AWS::Cognito::UserPool",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "UserPoolName": {"Fn::Sub": "pacific-bioarchive-${Environment}-users"},
+        "UsernameAttributes": ["email"],
+        "AutoVerifiedAttributes": ["email"],
+        "MfaConfiguration": "OFF",
+        "DeletionProtection": "ACTIVE",
+        "EmailConfiguration": {"EmailSendingAccount": "COGNITO_DEFAULT"},
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [{"Name": "verified_email", "Priority": 1}]
+        },
+        "VerificationMessageTemplate": {
+          "DefaultEmailOption": "CONFIRM_WITH_CODE",
+          "EmailSubject": "Verify your Pacific BioArchive account",
+          "EmailMessage": "Your Pacific BioArchive verification code is {####}."
+        },
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 12,
+            "RequireLowercase": true,
+            "RequireUppercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "TemporaryPasswordValidityDays": 1
+          }
+        },
+        "Schema": [
+          {"Name": "email", "AttributeDataType": "String", "Mutable": true, "Required": true},
+          {"Name": "given_name", "AttributeDataType": "String", "Mutable": true, "Required": true},
+          {"Name": "family_name", "AttributeDataType": "String", "Mutable": true, "Required": true}
+        ],
+        "UserPoolTags": {"Project": "PacificBioArchive", "Environment": {"Ref": "Environment"}}
+      }
+    },
+    "GoogleIdentityProvider": {
+      "Type": "AWS::Cognito::UserPoolIdentityProvider",
+      "Properties": {
+        "ProviderName": "Google",
+        "ProviderType": "Google",
+        "UserPoolId": {"Ref": "UserPool"},
+        "ProviderDetails": {
+          "client_id": {"Ref": "GoogleClientId"},
+          "client_secret": {"Ref": "GoogleClientSecret"},
+          "authorize_scopes": "openid email profile"
+        },
+        "AttributeMapping": {
+          "email": "email",
+          "given_name": "given_name",
+          "family_name": "family_name",
+          "username": "sub"
+        }
+      }
+    },
+    "UserPoolClient": {
+      "Type": "AWS::Cognito::UserPoolClient",
+      "DependsOn": ["GoogleIdentityProvider"],
+      "Properties": {
+        "ClientName": {"Fn::Sub": "pacific-bioarchive-${Environment}-spa"},
+        "UserPoolId": {"Ref": "UserPool"},
+        "GenerateSecret": false,
+        "PreventUserExistenceErrors": "ENABLED",
+        "EnableTokenRevocation": true,
+        "AuthSessionValidity": 3,
+        "AccessTokenValidity": 60,
+        "IdTokenValidity": 60,
+        "RefreshTokenValidity": 1,
+        "TokenValidityUnits": {"AccessToken": "minutes", "IdToken": "minutes", "RefreshToken": "days"},
+        "ExplicitAuthFlows": ["ALLOW_USER_SRP_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthFlows": ["code"],
+        "AllowedOAuthScopes": ["openid", "email", "profile"],
+        "SupportedIdentityProviders": ["COGNITO", "Google"],
+        "CallbackURLs": {"Ref": "CallbackUrls"},
+        "LogoutURLs": {"Ref": "LogoutUrls"},
+        "ReadAttributes": ["email", "email_verified", "given_name", "family_name"],
+        "WriteAttributes": ["email", "given_name", "family_name"]
+      }
+    },
+    "UserPoolDomain": {
+      "Type": "AWS::Cognito::UserPoolDomain",
+      "Properties": {"Domain": {"Ref": "HostedUiDomainPrefix"}, "UserPoolId": {"Ref": "UserPool"}}
+    },
+    "CoreApiRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+        },
+        "ManagedPolicyArns": [{"Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}],
+        "Policies": [{
+          "PolicyName": "PacificBioArchiveCoreApi",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {"Sid": "MediaMetadata", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:Scan"], "Resource": {"Ref": "MediaTableArn"}},
+              {"Sid": "DedupState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "DedupTableArn"}},
+              {"Sid": "SubscriptionState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "SubscriptionsTableArn"}},
+              {"Sid": "NotificationEvents", "Effect": "Allow", "Action": ["dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "NotificationEventsTableArn"}},
+              {"Sid": "PrivateMediaObjects", "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], "Resource": [{"Fn::Sub": "${MediaBucketArn}/originals/*"}, {"Fn::Sub": "${MediaBucketArn}/thumbnails/*"}, {"Fn::Sub": "${MediaBucketArn}/query-temp/*"}]},
+              {"Sid": "NotificationTopic", "Effect": "Allow", "Action": ["sns:Subscribe", "sns:Publish"], "Resource": {"Ref": "NotificationTopicArn"}},
+              {"Sid": "OwnTopicSubscriptions", "Effect": "Allow", "Action": ["sns:GetSubscriptionAttributes", "sns:SetSubscriptionAttributes", "sns:Unsubscribe"], "Resource": {"Fn::Sub": "${NotificationTopicArn}:*"}}
+            ]
+          }
+        }],
+        "Tags": [{"Key": "Project", "Value": "PacificBioArchive"}, {"Key": "Environment", "Value": {"Ref": "Environment"}}]
+      }
+    },
+    "MediaProcessorRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+        },
+        "ManagedPolicyArns": [{"Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}],
+        "Policies": [{
+          "PolicyName": "PacificBioArchiveMediaProcessor",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {"Sid": "MediaState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": {"Ref": "MediaTableArn"}},
+              {"Sid": "DedupCommit", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:UpdateItem"], "Resource": {"Ref": "DedupTableArn"}},
+              {"Sid": "NotificationEvents", "Effect": "Allow", "Action": ["dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "NotificationEventsTableArn"}},
+              {"Sid": "ReadOriginals", "Effect": "Allow", "Action": ["s3:GetObject"], "Resource": {"Fn::Sub": "${MediaBucketArn}/originals/*"}},
+              {"Sid": "ManageThumbnails", "Effect": "Allow", "Action": ["s3:PutObject", "s3:DeleteObject"], "Resource": {"Fn::Sub": "${MediaBucketArn}/thumbnails/*"}},
+              {"Sid": "ReadModels", "Effect": "Allow", "Action": ["s3:GetObject"], "Resource": {"Fn::Sub": "${ModelBucketArn}/*"}},
+              {"Sid": "PublishNotifications", "Effect": "Allow", "Action": ["sns:Publish"], "Resource": {"Ref": "NotificationTopicArn"}}
+            ]
+          }
+        }],
+        "Tags": [{"Key": "Project", "Value": "PacificBioArchive"}, {"Key": "Environment", "Value": {"Ref": "Environment"}}]
+      }
+    },
+    "TemporaryQueryRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+        },
+        "ManagedPolicyArns": [{"Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}],
+        "Policies": [{
+          "PolicyName": "PacificBioArchiveTemporaryQuery",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {"Sid": "SearchReadyMedia", "Effect": "Allow", "Action": ["dynamodb:Scan"], "Resource": {"Ref": "MediaTableArn"}},
+              {"Sid": "ConsumeTemporaryInput", "Effect": "Allow", "Action": ["s3:GetObject", "s3:DeleteObject"], "Resource": {"Fn::Sub": "${MediaBucketArn}/query-temp/*"}},
+              {"Sid": "SignResultMedia", "Effect": "Allow", "Action": ["s3:GetObject"], "Resource": [{"Fn::Sub": "${MediaBucketArn}/originals/*"}, {"Fn::Sub": "${MediaBucketArn}/thumbnails/*"}]},
+              {"Sid": "ReadModels", "Effect": "Allow", "Action": ["s3:GetObject"], "Resource": {"Fn::Sub": "${ModelBucketArn}/*"}}
+            ]
+          }
+        }],
+        "Tags": [{"Key": "Project", "Value": "PacificBioArchive"}, {"Key": "Environment", "Value": {"Ref": "Environment"}}]
+      }
+    }
+  },
+  "Outputs": {
+    "UserPoolId": {"Value": {"Ref": "UserPool"}},
+    "UserPoolClientId": {"Value": {"Ref": "UserPoolClient"}},
+    "JwtIssuer": {"Value": {"Fn::Sub": "https://cognito-idp.${AWS::Region}.${AWS::URLSuffix}/${UserPool}"}},
+    "HostedUiBaseUrl": {"Value": {"Fn::Sub": "https://${HostedUiDomainPrefix}.auth.${AWS::Region}.amazoncognito.com"}},
+    "CoreApiRoleArn": {"Value": {"Fn::GetAtt": ["CoreApiRole", "Arn"]}},
+    "MediaProcessorRoleArn": {"Value": {"Fn::GetAtt": ["MediaProcessorRole", "Arn"]}},
+    "TemporaryQueryRoleArn": {"Value": {"Fn::GetAtt": ["TemporaryQueryRole", "Arn"]}}
+  }
+}
