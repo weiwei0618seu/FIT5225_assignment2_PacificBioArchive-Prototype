@@ -20,6 +20,7 @@ concurrency:
 env:
   PBA_ECR_ROLE_ARN: arn:aws:iam::835597620771:role/pba-prototype-github-ecr-push
   PBA_ECR_REPOSITORY_URI: 835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml
+  PBA_EXPECTED_OIDC_SUB: repo:weiwei0618seu@265754710/FIT5225_assignment2_PacificBioArchive-Prototype@1339555089:ref:refs/heads/stage-6.3-aws-deployment
 
 jobs:
   publish:
@@ -43,14 +44,14 @@ jobs:
           [[ "$ROLE_ARN" =~ ^arn:aws:iam::[0-9]{12}:role/pba-prototype-github-ecr-push$ ]]
           [[ "$REPOSITORY_URI" =~ ^[0-9]{12}\.dkr\.ecr\.ap-southeast-2\.amazonaws\.com/pacific-bioarchive-prototype-ml$ ]]
 
-      - name: Record non-secret OIDC claim boundary
+      - name: Validate branch-bound OIDC claims
         run: |
           oidc_token="$(curl --fail --silent --show-error \
             --header "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -er .value)"
           oidc_payload="${oidc_token#*.}"
           oidc_payload="${oidc_payload%%.*}"
-          python - "$oidc_payload" <<'PY'
+          python - "$oidc_payload" "$PBA_EXPECTED_OIDC_SUB" <<'PY'
           import base64
           import json
           import sys
@@ -58,20 +59,23 @@ jobs:
           encoded = sys.argv[1]
           encoded += "=" * (-len(encoded) % 4)
           claims = json.loads(base64.urlsafe_b64decode(encoded))
-          safe_names = (
-              "iss",
-              "aud",
-              "sub",
-              "repository",
-              "repository_owner",
-              "repository_visibility",
-              "ref",
-              "ref_type",
-              "event_name",
-              "workflow_ref",
-              "job_workflow_ref",
-          )
-          print(json.dumps({name: claims.get(name) for name in safe_names}, sort_keys=True))
+          expected = {
+              "iss": "https://token.actions.githubusercontent.com",
+              "aud": "sts.amazonaws.com",
+              "sub": sys.argv[2],
+              "repository": "weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype",
+              "ref": "refs/heads/stage-6.3-aws-deployment",
+              "ref_type": "branch",
+              "event_name": "push",
+          }
+          mismatches = {
+              name: {"expected": value, "actual": claims.get(name)}
+              for name, value in expected.items()
+              if claims.get(name) != value
+          }
+          if mismatches:
+              raise SystemExit(f"OIDC claim boundary mismatch: {json.dumps(mismatches, sort_keys=True)}")
+          print("OIDC claims match the exact repository, owner IDs, branch and audience boundary.")
           PY
 
       - uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1

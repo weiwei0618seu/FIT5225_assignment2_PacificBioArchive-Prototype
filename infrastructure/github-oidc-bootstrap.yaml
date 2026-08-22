@@ -10,10 +10,20 @@ Parameters:
     Type: String
     Default: weiwei0618seu
     AllowedPattern: '^[A-Za-z0-9_.-]+$'
+  GitHubOrganizationId:
+    Type: String
+    Default: '265754710'
+    AllowedPattern: '^[0-9]+$'
+    Description: Immutable GitHub owner ID included by this private repository's customized OIDC subject
   GitHubRepository:
     Type: String
     Default: FIT5225_assignment2_PacificBioArchive-Prototype
     AllowedPattern: '^[A-Za-z0-9_.-]+$'
+  GitHubRepositoryId:
+    Type: String
+    Default: '1339555089'
+    AllowedPattern: '^[0-9]+$'
+    Description: Immutable GitHub repository ID included by this private repository's customized OIDC subject
   DeploymentBranch:
     Type: String
     Default: stage-6.3-aws-deployment
@@ -73,7 +83,7 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/${DeploymentBranch}'
+                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrganization}@${GitHubOrganizationId}/${GitHubRepository}@${GitHubRepositoryId}:ref:refs/heads/${DeploymentBranch}'
       Policies:
         - PolicyName: PushOnlyVerifiedMlImage
           PolicyDocument:
@@ -108,4 +118,4 @@ Outputs:
   GitHubEcrPushRoleArn:
     Value: !GetAtt GitHubEcrPushRole.Arn
   TrustedGitHubSubject:
-    Value: !Sub 'repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/${DeploymentBranch}'
+    Value: !Sub 'repo:${GitHubOrganization}@${GitHubOrganizationId}/${GitHubRepository}@${GitHubRepositoryId}:ref:refs/heads/${DeploymentBranch}'
