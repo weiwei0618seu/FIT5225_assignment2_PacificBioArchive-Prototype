@@ -1,6 +1,18 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "Pacific BioArchive Cognito, Google federation, and least-privilege Lambda roles",
+  "Rules": {
+    "GoogleCredentialsRequiredWhenEnabled": {
+      "RuleCondition": {"Fn::Equals": [{"Ref": "EnableGoogleFederation"}, "true"]},
+      "Assertions": [{
+        "Assert": {"Fn::And": [
+          {"Fn::Not": [{"Fn::Equals": [{"Ref": "GoogleClientId"}, ""]}]},
+          {"Fn::Not": [{"Fn::Equals": [{"Ref": "GoogleClientSecret"}, ""]}]}
+        ]},
+        "AssertDescription": "Google client ID and secret are required when federation is enabled"
+      }]
+    }
+  },
   "Parameters": {
     "Environment": {
       "Type": "String",
@@ -20,15 +32,20 @@
       "Type": "CommaDelimitedList",
       "Description": "Exact HTTPS sign-out URLs plus localhost only for development"
     },
+    "EnableGoogleFederation": {
+      "Type": "String",
+      "AllowedValues": ["true", "false"],
+      "Default": "false"
+    },
     "GoogleClientId": {
       "Type": "String",
       "NoEcho": true,
-      "MinLength": 1
+      "Default": ""
     },
     "GoogleClientSecret": {
       "Type": "String",
       "NoEcho": true,
-      "MinLength": 1
+      "Default": ""
     },
     "MediaBucketArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:s3:::[A-Za-z0-9.-]+$"},
     "ModelBucketArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:s3:::[A-Za-z0-9.-]+$"},
@@ -37,6 +54,9 @@
     "SubscriptionsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
     "NotificationEventsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
     "NotificationTopicArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:sns:[^:]+:[0-9]+:.+$"}
+  },
+  "Conditions": {
+    "GoogleFederationEnabled": {"Fn::Equals": [{"Ref": "EnableGoogleFederation"}, "true"]}
   },
   "Resources": {
     "UserPool": {
@@ -78,6 +98,7 @@
     },
     "GoogleIdentityProvider": {
       "Type": "AWS::Cognito::UserPoolIdentityProvider",
+      "Condition": "GoogleFederationEnabled",
       "Properties": {
         "ProviderName": "Google",
         "ProviderType": "Google",
@@ -97,7 +118,6 @@
     },
     "UserPoolClient": {
       "Type": "AWS::Cognito::UserPoolClient",
-      "DependsOn": ["GoogleIdentityProvider"],
       "Properties": {
         "ClientName": {"Fn::Sub": "pacific-bioarchive-${Environment}-spa"},
         "UserPoolId": {"Ref": "UserPool"},
@@ -113,7 +133,7 @@
         "AllowedOAuthFlowsUserPoolClient": true,
         "AllowedOAuthFlows": ["code"],
         "AllowedOAuthScopes": ["openid", "email", "profile"],
-        "SupportedIdentityProviders": ["COGNITO", "Google"],
+        "SupportedIdentityProviders": {"Fn::If": ["GoogleFederationEnabled", ["COGNITO", {"Ref": "GoogleIdentityProvider"}], ["COGNITO"]]},
         "CallbackURLs": {"Ref": "CallbackUrls"},
         "LogoutURLs": {"Ref": "LogoutUrls"},
         "ReadAttributes": ["email", "email_verified", "given_name", "family_name"],

@@ -1,0 +1,670 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Pacific BioArchive serverless prototype (ap-southeast-2, free-plan guarded)
+
+Metadata:
+  cfn-lint:
+    config:
+      # cfn-lint cannot resolve named Outputs from a local
+      # AWS::Serverless::Application. SAM packaging resolves these GetAtts.
+      ignore_checks: [E1010, E6101]
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues: [prototype, demo]
+    Default: prototype
+  HostedUiDomainPrefix:
+    Type: String
+    AllowedPattern: '^[a-z0-9-]{8,63}$'
+    Description: Globally unique Cognito managed-login domain prefix
+  EnableGoogleFederation:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  GoogleClientId:
+    Type: String
+    NoEcho: true
+    Default: ''
+  GoogleClientSecret:
+    Type: String
+    NoEcho: true
+    Default: ''
+  CreateCostBudget:
+    Type: String
+    AllowedValues: ['true', 'false']
+    Default: 'false'
+  BudgetAlertEmail:
+    Type: String
+    Default: ''
+    Description: Verified team email; required only when CreateCostBudget=true
+  AppVersion:
+    Type: String
+    Default: 0.1.0
+  ModelVersion:
+    Type: String
+    Default: supplied-v1
+
+Rules:
+  DeployOnlyInSydney:
+    Assertions:
+      - Assert: !Equals [!Ref AWS::Region, ap-southeast-2]
+        AssertDescription: This prototype may only be deployed in ap-southeast-2.
+  BudgetEmailRequired:
+    RuleCondition: !Equals [!Ref CreateCostBudget, 'true']
+    Assertions:
+      - Assert: !Not [!Equals [!Ref BudgetAlertEmail, '']]
+        AssertDescription: BudgetAlertEmail is required when a cost budget is enabled.
+
+Conditions:
+  CostBudgetEnabled: !Equals [!Ref CreateCostBudget, 'true']
+
+Globals:
+  Function:
+    Architectures: [x86_64]
+    Tracing: Active
+    Environment:
+      Variables:
+        PBA_APP_VERSION: !Ref AppVersion
+        PBA_MEDIA_BUCKET: !Ref MediaBucket
+        PBA_MEDIA_TABLE: !Ref MediaTable
+        PBA_DEDUP_TABLE: !Ref DedupTable
+        PBA_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+        PBA_NOTIFICATION_EVENTS_TABLE: !Ref NotificationEventsTable
+        PBA_NOTIFICATION_TOPIC_ARN: !Ref NotificationTopic
+        PBA_MODEL_VERSION: !Ref ModelVersion
+        PBA_DETECTOR_MODEL_PATH: /opt/models/mdv5a.pt
+        PBA_CLASSIFIER_MODEL_PATH: /opt/models/model.torchscript
+        PBA_LABELS_PATH: /opt/models/labels.txt
+        PBA_DETECTION_THRESHOLD: '0.05'
+        PBA_CLASSIFICATION_THRESHOLD: '0.0'
+        PBA_FORCE_CPU: 'true'
+        PBA_MAX_VIDEO_SAMPLES: '30'
+    Tags:
+      Project: PacificBioArchive
+      Environment: !Ref Environment
+
+Resources:
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !Sub 'https://${FrontendDistribution.DomainName}'
+              - http://localhost:5173
+            AllowedMethods: [GET, HEAD, PUT]
+            AllowedHeaders:
+              - Content-Type
+              - x-amz-checksum-sha256
+              - x-amz-meta-file-id
+              - x-amz-meta-checksum-sha256
+            ExposedHeaders: [ETag, x-amz-checksum-sha256]
+            MaxAge: 300
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireTemporaryQueries
+            Status: Enabled
+            Prefix: query-temp/
+            ExpirationInDays: 1
+          - Id: AbortIncompleteMultipartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  MediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MediaBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt MediaBucket.Arn
+              - !Sub '${MediaBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  ModelBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldModelVersions
+            Status: Enabled
+            NoncurrentVersionExpiration:
+              NoncurrentDays: 7
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  ModelBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ModelBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt ModelBucket.Arn
+              - !Sub '${ModelBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  FrontendBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  FrontendOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-frontend-oac'
+        Description: SigV4-only access to the private SPA bucket
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  FrontendDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub 'Pacific BioArchive ${Environment} SPA'
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: FrontendS3
+            DomainName: !GetAtt FrontendBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt FrontendOriginAccessControl.Id
+            S3OriginConfig: {}
+        DefaultCacheBehavior:
+          TargetOriginId: FrontendS3
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD, OPTIONS]
+          CachedMethods: [GET, HEAD, OPTIONS]
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+        CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+            ErrorCachingMinTTL: 0
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  FrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontReadOnly
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:${AWS::Partition}:cloudfront::${AWS::AccountId}:distribution/${FrontendDistribution}'
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt FrontendBucket.Arn
+              - !Sub '${FrontendBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: 'false'
+
+  MediaTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: file_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: file_id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  DedupTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: checksum
+          AttributeType: S
+      KeySchema:
+        - AttributeName: checksum
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  SubscriptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: user_sub
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_sub
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  NotificationEventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: event_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: event_id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: Pacific BioArchive tag alerts
+      FifoTopic: false
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuthAndIam:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: auth-and-iam.json
+      Parameters:
+        Environment: !Ref Environment
+        HostedUiDomainPrefix: !Ref HostedUiDomainPrefix
+        CallbackUrls: !Join
+          - ','
+          - - !Sub 'https://${FrontendDistribution.DomainName}/auth/callback'
+            - http://localhost:5173/auth/callback
+        LogoutUrls: !Join
+          - ','
+          - - !Sub 'https://${FrontendDistribution.DomainName}/login'
+            - http://localhost:5173/login
+        EnableGoogleFederation: !Ref EnableGoogleFederation
+        GoogleClientId: !Ref GoogleClientId
+        GoogleClientSecret: !Ref GoogleClientSecret
+        MediaBucketArn: !GetAtt MediaBucket.Arn
+        ModelBucketArn: !GetAtt ModelBucket.Arn
+        MediaTableArn: !GetAtt MediaTable.Arn
+        DedupTableArn: !GetAtt DedupTable.Arn
+        SubscriptionsTableArn: !GetAtt SubscriptionsTable.Arn
+        NotificationEventsTableArn: !GetAtt NotificationEventsTable.Arn
+        NotificationTopicArn: !Ref NotificationTopic
+      Tags:
+        Project: PacificBioArchive
+        Environment: !Ref Environment
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      FailOnWarnings: true
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub 'https://${FrontendDistribution.DomainName}'
+          - http://localhost:5173
+        AllowHeaders: [Authorization, Content-Type]
+        AllowMethods: [GET, POST, DELETE, OPTIONS]
+        MaxAge: 300
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 10
+        ThrottlingRateLimit: 5
+        DetailedMetricsEnabled: false
+      Auth:
+        DefaultAuthorizer: CognitoJwtAuthorizer
+        Authorizers:
+          CognitoJwtAuthorizer:
+            IdentitySource: '$request.header.Authorization'
+            JwtConfiguration:
+              issuer: !GetAtt AuthAndIam.Outputs.JwtIssuer
+              audience:
+                - !GetAtt AuthAndIam.Outputs.UserPoolClientId
+      Tags:
+        Project: PacificBioArchive
+        Environment: !Ref Environment
+
+  CoreApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'pba-${Environment}-core-api'
+      PackageType: Zip
+      Runtime: python3.12
+      CodeUri: ../backend/
+      Handler: pacific_bioarchive.handlers.api.lambda_handler
+      Role: !GetAtt AuthAndIam.Outputs.CoreApiRoleArn
+      MemorySize: 512
+      Timeout: 29
+      ReservedConcurrentExecutions: 2
+      Events:
+        Health:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /health, Method: GET}
+        UploadInit:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /uploads/init, Method: POST}
+        MediaDetail:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: '/media/{file_id}', Method: GET}
+        TagsQuery:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /queries/tags, Method: POST}
+        SpeciesQuery:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /queries/species, Method: GET}
+        ThumbnailQuery:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /queries/thumbnail, Method: POST}
+        TempQueryInit:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /queries/file/init, Method: POST}
+        EditTags:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /media/tags, Method: POST}
+        DeleteMedia:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /media/delete, Method: POST}
+        CreateSubscription:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /notifications/subscription, Method: POST}
+        GetSubscription:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /notifications/subscription, Method: GET}
+        DeleteSubscription:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: /notifications/subscription, Method: DELETE}
+    Metadata:
+      BuildMethod: python3.12
+
+  MediaProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'pba-${Environment}-media-processor'
+      PackageType: Image
+      Role: !GetAtt AuthAndIam.Outputs.MediaProcessorRoleArn
+      MemorySize: 4096
+      Timeout: 900
+      EphemeralStorage:
+        Size: 1024
+      ReservedConcurrentExecutions: 1
+      ImageConfig:
+        Command: [pacific_bioarchive.handlers.media_processor.lambda_handler]
+    Metadata:
+      DockerContext: ..
+      Dockerfile: backend/Dockerfile.ml
+      DockerTag: !Sub 'media-${ModelVersion}'
+
+  TemporaryQueryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'pba-${Environment}-temporary-query'
+      PackageType: Image
+      Role: !GetAtt AuthAndIam.Outputs.TemporaryQueryRoleArn
+      MemorySize: 4096
+      Timeout: 300
+      EphemeralStorage:
+        Size: 1024
+      ReservedConcurrentExecutions: 1
+      ImageConfig:
+        Command: [pacific_bioarchive.handlers.temp_query.lambda_handler]
+      Events:
+        ExecuteTempQuery:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: '/queries/file/{query_id}', Method: POST}
+    Metadata:
+      DockerContext: ..
+      Dockerfile: backend/Dockerfile.ml
+      DockerTag: !Sub 'query-${ModelVersion}'
+
+  OriginalObjectRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Route only private originals to bounded ML processing
+      EventPattern:
+        source: [aws.s3]
+        detail-type: [Object Created]
+        detail:
+          bucket:
+            name: [!Ref MediaBucket]
+          object:
+            key:
+              - prefix: originals/
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt MediaProcessorFunction.Arn
+          Id: MediaProcessor
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 2
+          InputTransformer:
+            InputPathsMap:
+              bucket: '$.detail.bucket.name'
+              key: '$.detail.object.key'
+            InputTemplate: '{"Records":[{"eventSource":"aws:s3","eventName":"ObjectCreated:Put","s3":{"bucket":{"name":<bucket>},"object":{"key":<key>}}}]}'
+
+  AllowEventBridgeInvokeProcessor:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref MediaProcessorFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt OriginalObjectRule.Arn
+
+  CoreApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${CoreApiFunction}'
+      RetentionInDays: 7
+
+  MediaProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${MediaProcessorFunction}'
+      RetentionInDays: 7
+
+  TemporaryQueryLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${TemporaryQueryFunction}'
+      RetentionInDays: 7
+
+  ApiErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Pacific BioArchive core API errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref CoreApiFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  ProcessorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Pacific BioArchive media processor errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref MediaProcessorFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  CostBudget:
+    Type: AWS::Budgets::Budget
+    Condition: CostBudgetEnabled
+    Properties:
+      Budget:
+        BudgetName: !Sub '${AWS::StackName}-one-dollar-guardrail'
+        BudgetLimit:
+          Amount: 1
+          Unit: USD
+        BudgetType: COST
+        TimeUnit: MONTHLY
+      NotificationsWithSubscribers:
+        - Notification:
+            ComparisonOperator: GREATER_THAN
+            NotificationType: ACTUAL
+            Threshold: 0.1
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - Address: !Ref BudgetAlertEmail
+              SubscriptionType: EMAIL
+
+Outputs:
+  Region:
+    Value: !Ref AWS::Region
+  ApiUrl:
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}'
+  FrontendUrl:
+    Value: !Sub 'https://${FrontendDistribution.DomainName}'
+  FrontendBucketName:
+    Value: !Ref FrontendBucket
+  FrontendDistributionId:
+    Value: !Ref FrontendDistribution
+  MediaBucketName:
+    Value: !Ref MediaBucket
+  ModelBucketName:
+    Value: !Ref ModelBucket
+  UserPoolId:
+    Value: !GetAtt AuthAndIam.Outputs.UserPoolId
+  UserPoolClientId:
+    Value: !GetAtt AuthAndIam.Outputs.UserPoolClientId
+  CognitoHostedUiUrl:
+    Value: !GetAtt AuthAndIam.Outputs.HostedUiBaseUrl
+  GoogleOAuthRedirectUrl:
+    Value: !Join ['', [!GetAtt AuthAndIam.Outputs.HostedUiBaseUrl, /oauth2/idpresponse]]

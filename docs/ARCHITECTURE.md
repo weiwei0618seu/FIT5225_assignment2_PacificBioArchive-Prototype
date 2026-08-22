@@ -9,8 +9,8 @@ flowchart LR
   A --> L[Core API Lambda]
   L --> D[(DynamoDB media/dedup/subscriptions)]
   L -->|presigned PUT/GET| S[(Private S3 media bucket)]
-  S -->|ObjectCreated originals/| P[Media Processor Lambda container]
-  P --> M[(Versioned S3 model bucket)]
+  S -->|EventBridge Object Created originals/| P[Media Processor Lambda container]
+  P -. immutable supplied weights .-> M[(Versioned S3 model archive)]
   P --> S
   P --> D
   P --> N[SNS watched-tag topic]
@@ -19,7 +19,7 @@ flowchart LR
   Q --> S
   Q --> D
   N --> E[Confirmed subscriber email]
-  W[S3-hosted React SPA] --> U
+  W[CloudFront + private S3 React SPA] --> U
   L -. logs .-> CW[CloudWatch]
   P -. logs .-> CW
   Q -. logs .-> CW
@@ -70,10 +70,25 @@ durable identifier.
 ## ML policy
 
 - supplied detector and classifier only; no retraining is required;
-- model bucket key, version, SHA-256, thresholds, and class-map path are
-  environment/configuration values;
+- the original supplied classifier pickle is converted in an isolated image
+  build stage to numerically checked TorchScript; ONNX/protobuf-6 build
+  dependencies never enter the final MegaDetector/protobuf-3 runtime;
+- supplied weights and labels are baked into the immutable Lambda image, while
+  the versioned model bucket remains an auditable deployment archive;
+- model version, paths, thresholds, and class-map path are environment values;
 - processes load each model once per warm Lambda execution environment;
 - image counts equal accepted animal detections after classification;
 - video counts use the maximum simultaneous accepted count for each species
   across exact 1-second samples, avoiding artificial count inflation when one
   animal remains across multiple seconds.
+
+## Cost and deployment boundary
+
+- a template rule rejects deployment outside `ap-southeast-2`;
+- DynamoDB uses on-demand mode, API throttling is 5 requests/second, heavy
+  Lambdas have concurrency 1, and CloudWatch logs expire after seven days;
+- query-temp objects expire after one day and incomplete multipart uploads abort;
+- no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF is present;
+- the root stack can bootstrap native Cognito without secrets; Google is enabled
+  only by a later NoEcho stack update once exact CloudFront/Cognito redirects and
+  team-owned credentials are available.

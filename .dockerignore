@@ -1,0 +1,13 @@
+.git
+.gitignore
+.aws-sam
+frontend/node_modules
+frontend/dist
+backend/.venv
+backend/.pytest_cache
+backend/tests
+docs
+tmp
+uploads
+cropped_images
+mg_detections.json

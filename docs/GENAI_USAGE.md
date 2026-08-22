@@ -44,6 +44,11 @@ limited.
   bulk tag changes, explicit-confirmation complete deletion, per-item outcomes,
   verified-Cognito-email SNS watch creation/status/removal, and automated tests
   for destructive gating and honest pending status.
+- Designed and linted the Stage 6.1 SAM/CloudFormation stack, private CloudFront
+  SPA origin, bounded Lambda/EventBridge/DynamoDB/S3/SNS resources, cost guards,
+  deployment scripts and infrastructure tests. Diagnosed the supplied-model
+  protobuf conflict and implemented a numerically verified, no-retraining
+  build-stage conversion from the supplied classifier pickle to TorchScript.
 
 ## Human accountability
 

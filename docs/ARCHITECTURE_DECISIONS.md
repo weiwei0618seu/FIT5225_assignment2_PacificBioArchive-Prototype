@@ -73,3 +73,35 @@ data paths, so each receives its own role. Inline policies name exact table,
 topic and S3-prefix ARNs. The only wildcard suffix is beneath a configured
 object prefix or SNS topic subscription namespace; there is no star action or
 global star resource.
+
+## ADR-013 — Private CloudFront SPA origin
+
+The SPA bucket also blocks all public access. CloudFront uses origin access
+control and SigV4, redirects viewers to HTTPS and maps 403/404 to `index.html`
+for client routing. This supplies the HTTPS callbacks required by Cognito and
+Google without a public S3 website endpoint.
+
+## ADR-014 — EventBridge S3 delivery
+
+The media bucket publishes AWS service events to EventBridge. A prefix-filtered
+rule transforms `originals/` object-created events to the handler's tested S3
+event contract. This avoids a CloudFormation dependency cycle between the
+bucket, nested least-privilege role and image Lambda while retaining bounded
+retry and event age.
+
+## ADR-015 — Isolated classifier conversion
+
+MegaDetector declares protobuf `<=3.20.1`; modern ONNX needed to unpickle the
+provided onnx2torch classifier requires newer protobuf. Mixing them produced an
+unsatisfiable environment. A multi-stage image build therefore loads the exact
+provided `model.pt` with a separate ONNX/protobuf-6 toolchain, traces its fixed
+`[1,480,480,3]` input to TorchScript, verifies matching `[1,46]` values, and
+copies only that artifact into the MegaDetector/protobuf-3 runtime. No model is
+retrained and the source weights remain authoritative.
+
+## ADR-016 — Secret-free native-auth bootstrap
+
+The root stack defaults Google federation off so core AWS resources can be
+deployed and produce the exact CloudFront/Cognito redirect URLs without putting
+OAuth secrets in a command line or file. A CloudFormation rule requires both
+NoEcho Google values when the flag is later enabled for the HD deployment.

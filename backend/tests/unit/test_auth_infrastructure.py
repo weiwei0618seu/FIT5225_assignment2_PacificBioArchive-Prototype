@@ -91,9 +91,22 @@ class AuthIamTemplateTests(unittest.TestCase):
         self.assertFalse(client["GenerateSecret"])
         self.assertEqual(client["AllowedOAuthFlows"], ["code"])
         self.assertTrue(client["AllowedOAuthFlowsUserPoolClient"])
-        self.assertEqual(set(client["SupportedIdentityProviders"]), {"COGNITO", "Google"})
+        providers = client["SupportedIdentityProviders"]["Fn::If"]
+        self.assertEqual(providers[0], "GoogleFederationEnabled")
+        self.assertEqual(providers[1], ["COGNITO", {"Ref": "GoogleIdentityProvider"}])
+        self.assertEqual(providers[2], ["COGNITO"])
         self.assertEqual(set(client["AllowedOAuthScopes"]), {"openid", "email", "profile"})
         self.assertEqual(client["PreventUserExistenceErrors"], "ENABLED")
+
+    def test_native_bootstrap_is_allowed_but_hd_google_requires_credentials(self) -> None:
+        parameters = self.template["Parameters"]
+        self.assertEqual(parameters["EnableGoogleFederation"]["Default"], "false")
+        self.assertEqual(parameters["GoogleClientId"]["Default"], "")
+        self.assertEqual(parameters["GoogleClientSecret"]["Default"], "")
+        provider = self.resources["GoogleIdentityProvider"]
+        self.assertEqual(provider["Condition"], "GoogleFederationEnabled")
+        assertions = self.template["Rules"]["GoogleCredentialsRequiredWhenEnabled"]
+        self.assertIn("Assertions", assertions)
 
     def test_lambda_roles_trust_only_lambda_and_have_no_star_actions_or_resources(self) -> None:
         for logical_id in ("CoreApiRole", "MediaProcessorRole", "TemporaryQueryRole"):

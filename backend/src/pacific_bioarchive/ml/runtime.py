@@ -97,16 +97,11 @@ class TorchSpeciesClassifierRuntime:
         if self._model is None:
             with self._lock:
                 if self._model is None:
-                    import onnx2torch  # noqa: F401 - required for pickle class loading
                     import torch
 
                     if not self._force_cpu and torch.cuda.is_available():
                         self._device = "cuda"
-                    self._model = torch.load(
-                        self._model_path,
-                        map_location=self._device,
-                        weights_only=False,
-                    )
+                    self._model = torch.jit.load(str(self._model_path), map_location=self._device)
                     self._model.eval()
                     self._model.to(self._device)
                     self._torch = torch
@@ -143,4 +138,3 @@ def build_inference_service(config: RuntimeConfig) -> WildlifeInferenceService:
         detection_threshold=config.detection_threshold,
         classification_threshold=config.classification_threshold,
     )
-
