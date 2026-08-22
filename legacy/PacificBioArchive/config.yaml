@@ -1,0 +1,8 @@
+# Input / output paths
+INPUT_DIR: "/images/"
+MD_FILE: "mg_detections.json"
+SNIP_DIR: "cropped_images"
+
+# Detection & snipping parameters
+LOWER_CONF: 0.05
+SNIP_SIZE: 600

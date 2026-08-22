@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# AWS/SAM build output
+.aws-sam/
+samconfig.toml
+
+# IDE/OS/temp files
+.idea/
+.vscode/
+.DS_Store
+__MACOSX/
+tmp/
+*.log
+
+# Runtime artifacts
+cropped_images/
+mg_detections.json
+uploads/
+

@@ -1,0 +1,2 @@
+megadetector
+onnx2torch
