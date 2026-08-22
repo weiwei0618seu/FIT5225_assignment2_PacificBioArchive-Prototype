@@ -18,6 +18,9 @@ limited.
   Prototype repository.
 - Implemented and reviewed the Stage 3.2 S3-event processing orchestration,
   including adversarial checksum, replay, storage, model, and concurrency tests.
+- Implemented Stage 3.3 Cognito-bound SNS subscription/filter state and
+  deterministic notification-event deduplication, then verified pending,
+  confirmation, replay, failure/retry, automatic-tag and manual-tag paths.
 
 ## Human accountability
 

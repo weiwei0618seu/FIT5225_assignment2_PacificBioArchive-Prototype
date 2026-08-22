@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
+from typing import Protocol
 
 from pacific_bioarchive.domain.media import MediaRecord
 from pacific_bioarchive.domain.repositories import (
@@ -25,6 +26,12 @@ class ManagementValidationError(ValueError):
 
 class AuthorizationError(PermissionError):
     pass
+
+
+class RecordNotificationPublisher(Protocol):
+    def publish_for_record(
+        self, record: MediaRecord, *, tags: Iterable[str] | None = None
+    ) -> bool: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +67,7 @@ class MediaManagementService:
         dedup_repository: DedupRepository,
         storage: ObjectStorage,
         bucket_name: str,
+        notification_publisher: RecordNotificationPublisher | None = None,
         max_bulk_items: int = 25,
         max_tags: int = 20,
         max_tag_length: int = 50,
@@ -68,6 +76,7 @@ class MediaManagementService:
         self._dedup = dedup_repository
         self._storage = storage
         self._bucket_name = bucket_name
+        self._notifications = notification_publisher
         self._max_bulk_items = max_bulk_items
         self._max_tags = max_tags
         self._max_tag_length = max_tag_length
@@ -166,6 +175,8 @@ class MediaManagementService:
                 self._media.save(updated, expected_version=record.version)
             else:
                 updated = record
+            if operation == 1 and self._notifications is not None:
+                self._notifications.publish_for_record(updated, tags=normalized_tags)
             updated_records.append(updated)
             changes[record.file_id] = tuple(sorted(changed))
         return TagEditResult(tuple(updated_records), changes, operation)

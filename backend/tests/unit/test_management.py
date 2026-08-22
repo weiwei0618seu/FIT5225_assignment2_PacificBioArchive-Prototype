@@ -57,6 +57,15 @@ class FakeStorage:
         self.keys.discard(key)
 
 
+class FakeNotifications:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, tuple[str, ...]]] = []
+
+    def publish_for_record(self, item: MediaRecord, *, tags: set[str] | None = None) -> bool:
+        self.calls.append((item.file_id, tuple(sorted(tags or ()))))
+        return True
+
+
 class ManagementTests(unittest.TestCase):
     def setUp(self) -> None:
         self.media = InMemoryMediaRepository()
@@ -80,11 +89,13 @@ class ManagementTests(unittest.TestCase):
             if key
         }
         self.storage = FakeStorage(keys)
+        self.notifications = FakeNotifications()
         self.service = MediaManagementService(
             media_repository=self.media,
             dedup_repository=self.dedup,
             storage=self.storage,
             bucket_name=BUCKET,
+            notification_publisher=self.notifications,
         )
 
     def test_bulk_add_tags_accepts_ids_and_signed_urls(self) -> None:
@@ -105,6 +116,10 @@ class ManagementTests(unittest.TestCase):
         self.assertEqual(self.media.get("file-b").manual_tags, ("night", "research"))
         self.assertEqual(result.changed_tags["file-a"], ("research",))
         self.assertEqual(result.changed_tags["file-b"], ("night", "research"))
+        self.assertEqual(
+            self.notifications.calls,
+            [("file-a", ("night", "research")), ("file-b", ("night", "research"))],
+        )
 
     def test_bulk_remove_ignores_absent_tags_without_extra_version(self) -> None:
         result = self.service.edit_tags(
@@ -185,4 +200,3 @@ class ManagementTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

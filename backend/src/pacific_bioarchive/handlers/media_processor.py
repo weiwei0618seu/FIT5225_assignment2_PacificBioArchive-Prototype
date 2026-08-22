@@ -66,6 +66,7 @@ _processor: MediaProcessingService | None = None
 def _build_processor() -> MediaProcessingService:
     import boto3
 
+    from pacific_bioarchive.application.notifications import NotificationService
     from pacific_bioarchive.media.video_processing import (
         OpenCVFrameSampler,
         VideoInferenceService,
@@ -75,11 +76,27 @@ def _build_processor() -> MediaProcessingService:
         DynamoDedupRepository,
         DynamoMediaRepository,
     )
+    from pacific_bioarchive.persistence.notifications import (
+        DynamoNotificationEventRepository,
+        DynamoSubscriptionRepository,
+    )
     from pacific_bioarchive.persistence.s3 import S3ObjectStorage
+    from pacific_bioarchive.persistence.sns import SnsNotificationTopic
 
     bucket = os.environ["PBA_MEDIA_BUCKET"]
     dynamodb = boto3.resource("dynamodb")
     inference = build_inference_service(RuntimeConfig.from_environment())
+    notifications = NotificationService(
+        subscription_repository=DynamoSubscriptionRepository(
+            dynamodb.Table(os.environ["PBA_SUBSCRIPTIONS_TABLE"])
+        ),
+        event_repository=DynamoNotificationEventRepository(
+            dynamodb.Table(os.environ["PBA_NOTIFICATION_EVENTS_TABLE"])
+        ),
+        topic=SnsNotificationTopic(
+            boto3.client("sns"), topic_arn=os.environ["PBA_NOTIFICATION_TOPIC_ARN"]
+        ),
+    )
     return MediaProcessingService(
         media_repository=DynamoMediaRepository(dynamodb.Table(os.environ["PBA_MEDIA_TABLE"])),
         dedup_repository=DynamoDedupRepository(dynamodb.Table(os.environ["PBA_DEDUP_TABLE"])),
@@ -91,6 +108,7 @@ def _build_processor() -> MediaProcessingService:
             ),
             image_inference=inference,
         ),
+        notification_publisher=notifications,
     )
 
 

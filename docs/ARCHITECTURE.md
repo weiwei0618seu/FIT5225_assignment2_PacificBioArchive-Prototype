@@ -46,8 +46,20 @@ diagram must be rebuilt with official AWS architecture icons.
 `RESERVED → UPLOADED → PROCESSING → READY`
 
 Failures transition to `FAILED` with a safe error code. Replayed S3 events are
-idempotent: a `READY` record is not processed twice, and notification event IDs
-are recorded before publish.
+idempotent: a `READY` record is not processed twice, and deterministic
+notification event IDs are conditionally claimed before publish. A notification
+failure never changes successfully processed media back from `READY`.
+
+## Notification policy
+
+- Subscription identity and email come only from verified Cognito claims.
+- SNS email confirmation remains `PENDING` until the SNS subscription attributes
+  report it as confirmed.
+- Each subscriber gets an SNS filter policy containing normalized watched tags.
+- A media update publishes one `String.Array` tag attribute, allowing any watched
+  tag to match without sending one email per animal label.
+- Messages contain identifiers, filename and matched tags, but no credentials or
+  durable public media URL.
 
 ## Media URL policy
 
@@ -65,4 +77,3 @@ durable identifier.
 - video counts use the maximum simultaneous accepted count for each species
   across exact 1-second samples, avoiding artificial count inflation when one
   animal remains across multiple seconds.
-

@@ -61,9 +61,12 @@ Primary key: `user_sub`.
 
 ## Notification event item
 
-Notification idempotency uses a deterministic event key
-`file_id#record_version#tag`. It is conditionally inserted before publish so an
-S3 retry does not send the same logical notification twice.
+The notification-events table has primary key `event_id`. Notification
+idempotency uses a deterministic key
+`file_id#record_version#sha256(sorted-matching-tags)`. It is conditionally
+claimed before publish so an S3 retry does not send the same logical
+notification twice. A failed publish releases its claim so a later Lambda
+retry can try again.
 
 ## Query semantics
 
@@ -73,4 +76,3 @@ S3 retry does not send the same logical notification twice.
 - multi-tag inputs require every tag condition (logical AND);
 - temporary-file query uses the detected canonical tag set with minimum 1;
 - only `READY` media appears in normal results.
-

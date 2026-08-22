@@ -123,6 +123,18 @@ class FakeVideoInference:
         )
 
 
+class FakeNotifications:
+    def __init__(self) -> None:
+        self.fail = True
+        self.calls = 0
+
+    def publish_for_record(self, record: MediaRecord, **kwargs: object) -> bool:
+        self.calls += 1
+        if self.fail:
+            raise RuntimeError("SNS unavailable")
+        return True
+
+
 class AlwaysConflictRepository(InMemoryMediaRepository):
     def save(self, record: MediaRecord, *, expected_version: int) -> None:
         raise ConflictError("simulated concurrent invocation")
@@ -142,6 +154,7 @@ class AsyncProcessingTests(unittest.TestCase):
         fail_thumbnail: bool = False,
         fail_model: bool = False,
         repository: InMemoryMediaRepository | None = None,
+        notifications: FakeNotifications | None = None,
     ) -> tuple[
         MediaProcessingService,
         InMemoryMediaRepository,
@@ -177,6 +190,7 @@ class AsyncProcessingTests(unittest.TestCase):
             storage=storage,
             image_inference=FakeImageInference(fail=fail_model),
             video_inference=FakeVideoInference(fail=fail_model),
+            notification_publisher=notifications,
             temp_root=self.temp.name,
         )
         return service, media, dedup, storage, record
@@ -223,6 +237,25 @@ class AsyncProcessingTests(unittest.TestCase):
         self.assertTrue(replay.replay_ignored)
         self.assertEqual(storage.downloads, 1)
         self.assertEqual(len(storage.uploads), 1)
+
+    def test_notification_failure_keeps_ready_and_replay_retries_without_ml(self) -> None:
+        data = jpeg_bytes()
+        notifications = FakeNotifications()
+        service, media, dedup, storage, record = self.make_service(
+            data=data, notifications=notifications
+        )
+
+        with self.assertRaises(ProcessingError) as failure:
+            service.process_object(record.original_key)
+        self.assertEqual(failure.exception.code, "NOTIFICATION_PUBLISH_FAILED")
+        self.assertEqual(media.get(record.file_id).processing_status, ProcessingStatus.READY)
+        self.assertEqual(dedup.get(record.checksum).status, "COMMITTED")
+
+        notifications.fail = False
+        replay = service.process_object(record.original_key)
+        self.assertTrue(replay.replay_ignored)
+        self.assertEqual(notifications.calls, 2)
+        self.assertEqual(storage.downloads, 1)
 
     def test_recomputed_checksum_mismatch_is_failed_without_inference(self) -> None:
         expected = b"good"

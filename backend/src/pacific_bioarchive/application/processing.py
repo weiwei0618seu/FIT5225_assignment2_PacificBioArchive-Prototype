@@ -45,6 +45,10 @@ class VideoInference(Protocol):
     def classify_video(self, video_path: str | Path) -> VideoInferenceResult: ...
 
 
+class RecordNotificationPublisher(Protocol):
+    def publish_for_record(self, record: MediaRecord, **kwargs: object) -> bool: ...
+
+
 @dataclass(frozen=True, slots=True)
 class ProcessingOutcome:
     file_id: str
@@ -81,6 +85,7 @@ class MediaProcessingService:
         storage: PrivateObjectStorage,
         image_inference: ImageInference,
         video_inference: VideoInference,
+        notification_publisher: RecordNotificationPublisher | None = None,
         temp_root: str | Path | None = None,
     ) -> None:
         self._media = media_repository
@@ -88,6 +93,7 @@ class MediaProcessingService:
         self._storage = storage
         self._image_inference = image_inference
         self._video_inference = video_inference
+        self._notifications = notification_publisher
         self._temp_root = Path(temp_root) if temp_root is not None else None
 
     def process_object(self, key: str) -> ProcessingOutcome:
@@ -103,6 +109,7 @@ class MediaProcessingService:
             # This is deliberately idempotent, including recovery from a prior
             # READY write followed by a transient checksum-commit failure.
             self._dedup.commit(record.checksum, file_id=record.file_id)
+            self._publish_notification(record)
             return ProcessingOutcome(record.file_id, ProcessingStatus.READY, True)
 
         thumbnail_key: str | None = None
@@ -135,6 +142,7 @@ class MediaProcessingService:
                 self._media.save(ready, expected_version=processing_record.version)
                 ready_saved = True
                 self._dedup.commit(ready.checksum, file_id=ready.file_id)
+                self._publish_notification(ready)
                 return ProcessingOutcome(ready.file_id, ProcessingStatus.READY)
         except ConflictError:
             # Another invocation owns the optimistic transition. Never replace
@@ -142,9 +150,14 @@ class MediaProcessingService:
             raise
         except Exception as exc:
             if ready_saved:
+                code = (
+                    exc.code
+                    if isinstance(exc, ProcessingError)
+                    else "DEDUP_COMMIT_FAILED"
+                )
                 raise ProcessingError(
-                    "DEDUP_COMMIT_FAILED",
-                    "Media is READY but checksum commit must be retried",
+                    code,
+                    "Media is READY but post-processing must be retried",
                 ) from exc
             if thumbnail_key:
                 try:
@@ -156,6 +169,16 @@ class MediaProcessingService:
             failed = current.mark_failed(code)
             self._media.save(failed, expected_version=current.version)
             raise ProcessingError(code, "Media processing failed safely") from exc
+
+    def _publish_notification(self, record: MediaRecord) -> None:
+        if self._notifications is None:
+            return
+        try:
+            self._notifications.publish_for_record(record)
+        except Exception as exc:
+            raise ProcessingError(
+                "NOTIFICATION_PUBLISH_FAILED", "Notification publishing must be retried"
+            ) from exc
 
     def _temp_directory(self) -> str | None:
         if self._temp_root is not None:
