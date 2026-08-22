@@ -63,13 +63,20 @@ container proof; Stage 6.3 must separately record ECR and live Lambda evidence.
 6. Deploy the SPA from CloudShell with
    `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/deploy-frontend.sh`,
    or use `deploy-frontend.ps1` on Windows.
-7. Create the Google OAuth Web Application with the exact
+7. Run the read-only live acceptance gate. It prints only pass/fail labels and
+   intentionally suppresses endpoints and AWS response bodies:
+
+   ```bash
+   bash infrastructure/scripts/verify-live-stack.sh
+   ```
+
+8. Create the Google OAuth Web Application with the exact
    `GoogleOAuthRedirectUrl` output.
-8. Update the root stack through CloudFormation using transient `NoEcho`
+9. Update the root stack through CloudFormation using transient `NoEcho`
    `GoogleClientId`/`GoogleClientSecret` values and
    `EnableGoogleFederation=true`. Do not put those values in Git, terminal
    history, `samconfig.toml`, screenshots or chat.
-9. Confirm one Cognito verification email and one SNS subscription email, then
+10. Confirm one Cognito verification email and one SNS subscription email, then
    run the live E2E checklist.
 
 Both deployment scripts require an explicit confirmation switch. The core

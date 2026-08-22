@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import re
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 from typing import Any
@@ -10,6 +12,7 @@ import yaml
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_PATH = REPOSITORY_ROOT / "infrastructure" / "template.yaml"
 BOOTSTRAP_PATH = REPOSITORY_ROOT / "infrastructure" / "github-oidc-bootstrap.yaml"
+LIVE_VERIFY_PATH = REPOSITORY_ROOT / "infrastructure" / "scripts" / "verify-live-stack.sh"
 
 
 class CloudFormationLoader(yaml.SafeLoader):
@@ -234,6 +237,72 @@ class GitHubOidcBootstrapTests(unittest.TestCase):
         lifecycle = properties["LifecyclePolicy"]["LifecyclePolicyText"]
         self.assertIn('"imageCountMoreThan"', lifecycle)
         self.assertIn('"countNumber":1', lifecycle)
+
+
+class LiveStackVerificationScriptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.script = LIVE_VERIFY_PATH.read_text(encoding="utf-8")
+
+    def test_script_is_valid_bash_when_bash_is_available(self) -> None:
+        bash = shutil.which("bash")
+        if bash is None:
+            self.skipTest("bash is unavailable on this development host")
+        result = subprocess.run(
+            [bash, "-n", str(LIVE_VERIFY_PATH)],
+            capture_output=True,
+            check=False,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_verifies_live_state_security_cost_and_authentication_controls(self) -> None:
+        required_evidence = (
+            'StackStatus == "CREATE_COMPLETE"',
+            "lambda get-function --function-name",
+            "lambda get-function-concurrency --function-name",
+            ".ReservedConcurrentExecutions == null",
+            ".Code.ResolvedImageUri == $image",
+            "s3api get-public-access-block --bucket",
+            "s3api get-bucket-encryption --bucket",
+            "s3api get-bucket-policy --bucket",
+            'Condition.Bool["aws:SecureTransport"] == "false"',
+            "dynamodb describe-table --table-name",
+            'BillingModeSummary.BillingMode == "PAY_PER_REQUEST"',
+            "apigatewayv2 get-routes --api-id",
+            '.AuthorizationType == "JWT"',
+            "--output /dev/null --write-out '%{http_code}'",
+            'health_status" != \'401\'',
+            "cloudfront get-distribution --id",
+            "logs describe-log-groups --log-group-name-prefix",
+            ".retentionInDays == 7",
+            'test("^AWS::(EC2::|RDS::|OpenSearchService::|SageMaker::|EFS::|WAF)")',
+        )
+        for evidence in required_evidence:
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, self.script)
+
+    def test_uses_only_read_only_aws_calls_and_does_not_echo_sensitive_values(self) -> None:
+        aws_calls = re.findall(r'aws_json\s+([a-z0-9-]+)\s+([a-z0-9-]+)', self.script)
+        self.assertTrue(aws_calls)
+        forbidden_verbs = {
+            "create",
+            "delete",
+            "deploy",
+            "invoke",
+            "publish",
+            "put",
+            "subscribe",
+            "sync",
+            "update",
+        }
+        for service, operation in aws_calls:
+            with self.subTest(service=service, operation=operation):
+                self.assertFalse(any(operation.startswith(verb) for verb in forbidden_verbs))
+        self.assertNotIn("set -x", self.script)
+        self.assertNotIn("get-secret-value", self.script)
+        self.assertNotIn("--with-decryption", self.script)
+        self.assertNotRegex(self.script, r'printf[^\n]*(api_url|ml_image_uri|stack_output)')
 
 
 if __name__ == "__main__":
