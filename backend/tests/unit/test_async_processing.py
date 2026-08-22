@@ -206,6 +206,7 @@ class AsyncProcessingTests(unittest.TestCase):
         self.assertEqual(saved.processing_status, ProcessingStatus.READY)
         self.assertEqual(saved.species_counts, {"dingo": 1})
         self.assertEqual(saved.thumbnail_key, "thumbnails/file-1.jpg")
+        self.assertEqual(saved.model_version, "test-v1")
         self.assertEqual(saved.version, 3)
         self.assertEqual(storage.uploads[0][2], "image/jpeg")
         with Image.open(BytesIO(storage.uploads[0][1])) as thumbnail:

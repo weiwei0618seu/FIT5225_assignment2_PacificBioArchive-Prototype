@@ -21,6 +21,9 @@ limited.
 - Implemented Stage 3.3 Cognito-bound SNS subscription/filter state and
   deterministic notification-event deduplication, then verified pending,
   confirmation, replay, failure/retry, automatic-tag and manual-tag paths.
+- Implemented Stage 4.1 HTTP API v2 parsing, claim propagation, safe error
+  contracts, complete REST routing and isolated temporary-query ML execution;
+  tested every route family plus authentication, cleanup and error redaction.
 
 ## Human accountability
 

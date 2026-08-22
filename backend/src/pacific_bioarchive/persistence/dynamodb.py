@@ -62,6 +62,7 @@ def media_to_item(record: MediaRecord) -> dict[str, Any]:
     }
     optional = {
         "thumbnail_key": record.thumbnail_key,
+        "model_version": record.model_version,
         "video_samples": record.video_samples,
         "error_code": record.error_code,
     }
@@ -84,6 +85,7 @@ def media_from_item(raw_item: dict[str, Any]) -> MediaRecord:
         species_counts=item.get("species_counts", {}),
         manual_tags=tuple(item.get("manual_tags", [])),
         detections=tuple(item.get("detections", [])),
+        model_version=item.get("model_version"),
         video_samples=item.get("video_samples"),
         processing_status=ProcessingStatus(item["processing_status"]),
         error_code=item.get("error_code"),

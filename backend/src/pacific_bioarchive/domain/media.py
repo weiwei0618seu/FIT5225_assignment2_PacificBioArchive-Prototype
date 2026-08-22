@@ -37,6 +37,7 @@ class MediaRecord:
     species_counts: Mapping[str, int] | None = None
     manual_tags: tuple[str, ...] = ()
     detections: tuple[dict[str, object], ...] = ()
+    model_version: str | None = None
     video_samples: int | None = None
     processing_status: ProcessingStatus = ProcessingStatus.RESERVED
     error_code: str | None = None
@@ -77,6 +78,11 @@ class MediaRecord:
         object.__setattr__(self, "species_counts", dict(sorted(normalized_counts.items())))
         object.__setattr__(self, "manual_tags", normalized_manual)
         object.__setattr__(self, "detections", tuple(dict(item) for item in self.detections))
+        if self.model_version is not None:
+            model_version = self.model_version.strip()
+            if not model_version:
+                raise ValueError("model_version cannot be blank")
+            object.__setattr__(self, "model_version", model_version)
         if not self.created_at:
             object.__setattr__(self, "created_at", utc_now())
         if not self.updated_at:
@@ -117,6 +123,7 @@ class MediaRecord:
         *,
         species_counts: Mapping[str, int],
         detections: tuple[dict[str, object], ...],
+        model_version: str | None = None,
         thumbnail_key: str | None = None,
         video_samples: int | None = None,
         now: str | None = None,
@@ -125,6 +132,7 @@ class MediaRecord:
             self,
             species_counts=species_counts,
             detections=detections,
+            model_version=model_version,
             thumbnail_key=thumbnail_key,
             video_samples=video_samples,
             processing_status=ProcessingStatus.READY,

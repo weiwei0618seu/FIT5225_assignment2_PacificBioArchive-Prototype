@@ -20,6 +20,7 @@ Primary key: `file_id` (UUID string)
 | `manual_tags` | list<string> | normalized user-supplied tags |
 | `all_tags` | list<string> | union used by queries/notifications |
 | `detections` | list<object> | bounded species/confidence evidence |
+| `model_version` | string/null | inference artifact/configuration version used |
 | `video_samples` | integer/null | number of one-second frames processed |
 | `processing_status` | enum | `RESERVED/UPLOADED/PROCESSING/READY/FAILED` |
 | `error_code` | string/null | safe machine-readable failure reason |

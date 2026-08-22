@@ -127,15 +127,22 @@ class MediaProcessingService:
 
                 if record.file_type == MediaType.IMAGE:
                     thumbnail_key = f"thumbnails/{record.file_id}.jpg"
-                    thumbnail_key, counts, detections, video_samples = self._process_image(
-                        processing_record, local_path
-                    )
+                    (
+                        thumbnail_key,
+                        counts,
+                        detections,
+                        video_samples,
+                        model_version,
+                    ) = self._process_image(processing_record, local_path)
                 else:
-                    counts, detections, video_samples = self._process_video(local_path)
+                    counts, detections, video_samples, model_version = self._process_video(
+                        local_path
+                    )
 
                 ready = processing_record.mark_ready(
                     species_counts=counts,
                     detections=detections,
+                    model_version=model_version,
                     thumbnail_key=thumbnail_key,
                     video_samples=video_samples,
                 )
@@ -209,7 +216,7 @@ class MediaProcessingService:
 
     def _process_image(
         self, record: MediaRecord, local_path: Path
-    ) -> tuple[str, dict[str, int], tuple[dict[str, object], ...], None]:
+    ) -> tuple[str, dict[str, int], tuple[dict[str, object], ...], None, str]:
         thumbnail = build_thumbnail(local_path)
         thumbnail_key = f"thumbnails/{record.file_id}.jpg"
         try:
@@ -230,11 +237,12 @@ class MediaProcessingService:
             dict(result.species_counts),
             tuple(dict(item) for item in payload["detections"]),
             None,
+            result.model_version,
         )
 
     def _process_video(
         self, local_path: Path
-    ) -> tuple[dict[str, int], tuple[dict[str, object], ...], int]:
+    ) -> tuple[dict[str, int], tuple[dict[str, object], ...], int, str]:
         try:
             result = self._video_inference.classify_video(local_path)
         except VideoProcessingError:
@@ -246,6 +254,7 @@ class MediaProcessingService:
             dict(result.species_counts),
             tuple(dict(item) for item in payload["detections"]),
             len(result.sampled_timestamps),
+            result.model_version,
         )
 
     @staticmethod

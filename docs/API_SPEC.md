@@ -45,7 +45,10 @@ reserved checksum. Invalid type/size/checksum returns `400`.
 ### `GET /media/{file_id}`
 
 Returns processing state and, when ready, metadata plus expiring original and
-thumbnail URLs. `404` if unknown.
+thumbnail URLs. The uploader can inspect their own pending/failed record; other
+authenticated users see only `READY` media. `404` if unknown or intentionally
+hidden. Detail metadata includes bounded detections, confidence evidence and
+the configured `model_version` used for inference.
 
 ## Queries
 
@@ -72,8 +75,10 @@ returns the corresponding expiring full-size URL or `404`.
 
 ### `POST /queries/file/init`
 
-Input uses the same filename/content-type/size validation as upload but no
-dedup reservation. Returns `query_id`, `temp_key`, and presigned PUT URL.
+Input includes `filename`, `content_type`, `size_bytes`, and browser-computed
+`checksum`, using the same image limits as upload but no dedup reservation.
+Returns `query_id`, user-scoped `temp_key`, required signed headers, and a
+short-lived presigned PUT URL.
 
 ### `POST /queries/file/{query_id}`
 
@@ -81,6 +86,12 @@ Input: `{"temp_key":"query-temp/<subject>/<query-id>/input.jpg"}`. The ML
 function detects the temporary file's tags, queries ready media with logical
 AND, and deletes the temp object in `finally`. Returns detected tags and matches.
 It never creates a media/dedup record.
+
+This execution route is integrated with the separate ML container Lambda rather
+than the lightweight core API function. The function validates S3 metadata,
+checksum header and downloaded SHA-256, and deletes the temporary object in
+`finally` on success or failure. Cross-user/query keys return `400
+TEMP_QUERY_FORBIDDEN` without deleting another user's object.
 
 ## Tag management
 
@@ -124,6 +135,8 @@ AWS failures return `500 DELETE_INCOMPLETE` and are logged without secrets.
 Input: `{"tags":["dingo","wombat"]}`. Email is taken from the verified
 Cognito claims, never trusted from request JSON. Creates/updates the SNS email
 subscription/filter and returns `PENDING` until the user confirms the AWS email.
+The success status is `202`; it means the request is pending, not that email
+delivery has been confirmed.
 
 ### `GET /notifications/subscription`
 
@@ -143,6 +156,8 @@ interactive setup/demo preparation.
   "filename": "camera-01.jpg",
   "file_type": "image",
   "species_counts": {"dingo": 2},
+  "detections": [{"species":"dingo","combined_confidence":0.91}],
+  "model_version": "supplied-v1",
   "auto_tags": ["dingo"],
   "manual_tags": ["night"],
   "all_tags": ["dingo", "night"],
@@ -162,4 +177,3 @@ interactive setup/demo preparation.
 - query result page: 50 records, paginated thereafter.
 
 Limits are configuration values and returned in validation errors/UI guidance.
-
