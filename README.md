@@ -21,3 +21,21 @@ the reusable ML/media/domain/AWS/API layers in the order documented by
 - AWS deployment results will only be reported after they are actually tested.
 
 See `docs/MASTER_PLAN.md` for the complete implementation sequence.
+
+## Frontend development
+
+The React/TypeScript SPA lives in `frontend/`. Copy the public deployment
+identifiers from `.env.example` into an ignored `frontend/.env.local`, then:
+
+```powershell
+cd frontend
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run test:run
+pnpm run dev
+```
+
+The SPA supports Cognito email/password registration, email verification,
+native sign-in, Google federation through Cognito's authorization-code flow,
+session restoration, protected routes and logout. Feature routes are added
+cumulatively by the Stage 5 branches.

@@ -28,6 +28,10 @@ limited.
   IAM CloudFormation subtemplate, with automated assertions for registration,
   verification, PKCE-compatible client settings, secret handling and role
   separation.
+- Created and browser-tested the Stage 5.1 React/TypeScript authentication
+  experience, including required-attribute registration, confirmation-code
+  verification, native and Google entry points, protected routing, restored
+  sessions, logout, responsive desktop/mobile styling and component tests.
 
 ## Human accountability
 
