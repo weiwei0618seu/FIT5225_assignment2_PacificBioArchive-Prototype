@@ -8,10 +8,25 @@ Google values.
   supplied MegaDetector and supplied classifier-derived TorchScript on three
   supplied real fixtures. It includes source/derived artifact hashes, fixture
   hashes, timings, counts, detections, confidences and model version.
+- `LINUX_MODEL_SMOKE.json` — the corresponding observed Linux/Python 3.12 CPU
+  result from GitHub Actions run `32594837754` on commit `24e54bb`; all three
+  supplied fixtures matched their expected species.
+- `LINUX_CONTAINER.json` — the immutable local image ID, byte size,
+  architecture and OS printed by the same successful CI job.
 
 The derived TorchScript file lives only under ignored `tmp/`; it is reproduced
 from the Git LFS source classifier during the container build. Its evidence hash
-does not replace the committed source-model hash.
+does not replace the committed source-model hash. The Windows and Linux
+TorchScript serializations have different hashes, while the committed source
+classifier hash, fixture hashes and observed numerical outputs remain bound and
+equivalent. Both derived hashes are recorded rather than treated as source
+identity.
+
+The original seven-day artifact is
+[`linux-container-evidence-32594837754`](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32594837754/artifacts/9481320017)
+(artifact ID `9481320017`, ZIP SHA-256
+`cb13f98b49dd8e781b95bcb714a8d7bf399bdff7f4ea6b8132c4958e1e2b4ba8`).
+The two Linux JSON files above preserve its observed content after expiry.
 
 Live AWS evidence belongs in a separate Stage 6.3 file and must only be added
 after observing the deployed account. Never manufacture URLs, resource IDs,

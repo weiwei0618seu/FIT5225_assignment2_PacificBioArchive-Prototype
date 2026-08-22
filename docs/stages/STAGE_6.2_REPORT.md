@@ -80,12 +80,11 @@ capture now has an explicit reason and scoped lint exemption.
 
 The local machine has no Docker/SAM CLI. A GitHub Actions workflow, available
 manually and on code changes to this stage branch, runs the same quality gate,
-verifies that LFS objects are real, builds the x86_64
-Lambda image, executes both supplied models on all three fixtures in that Linux
-image and publishes seven-day model/image evidence artifacts. All Actions are
-pinned to immutable commits, checkout credentials are not persisted and workflow
-permissions are read-only. The stage is not allowed to call this passed until an
-actual run is observed and linked here.
+verifies that LFS objects are real, builds the x86_64 Lambda image, executes
+both supplied models on all three fixtures in that Linux image and publishes
+seven-day model/image evidence artifacts. All Actions are pinned to immutable
+commits, checkout credentials are not persisted and workflow permissions are
+read-only.
 
 ### First Linux attempt and remediation
 
@@ -133,6 +132,33 @@ resolution, checked with the rest of the dependency graph, then removed in the
 same image layer and replaced by the pinned headless wheel. An explicit `cv2`
 version/import assertion protects this server-safe substitution without adding
 X11 libraries or GUI surface to the Lambda image.
+
+### Successful Linux proof
+
+[Run #5](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32594837754)
+on commit `24e54bb0d220b8b7548e758f39e4cec54716d165` completed successfully
+in 4m23s: `quality` passed in 1m15s and `model-container` passed in
+3m02s. The Linux/Python 3.12/CPU smoke observed exactly one expected animal in
+each fixture:
+
+| Fixture | Expected/observed tag | Detector | Classifier | Combined | Time |
+|---|---|---:|---:|---:|---:|
+| `Alectura_lathami_1.JPG` | australian brushturkey ×1 | 0.961 | 0.999960 | 0.960961 | 14.690s |
+| `Casuarius_casuarius_1.JPG` | southern cassowary ×1 | 0.957 | 1.000000 | 0.957000 | 7.895s |
+| `Felis_catus_3.JPG` | domestic cat ×1 | 0.959 | 0.993951 | 0.953199 | 8.359s |
+
+Total inference time was 31.502s. The built image was Linux/amd64, image ID
+`sha256:f87d04e0e559fa2a7fc9249231a2942a75599839b2751af620b3a9cc7f231760`,
+size 3,307,053,883 bytes. The short-lived artifact has ID `9481320017`, ZIP
+SHA-256 `cb13f98b49dd8e781b95bcb714a8d7bf399bdff7f4ea6b8132c4958e1e2b4ba8`;
+its two observed files are preserved under `docs/evidence/`.
+
+The Linux-derived TorchScript SHA-256 is
+`1341076f407fdbd589672165cdd5d17df10e3979f22aef3f91b54529cacfd792`,
+which differs from the Windows serialization hash. This is recorded explicitly:
+source classifier, detector, labels, fixture bytes, tensor shape and numerical
+outputs remain bound and agree; the derived serialization is not used as the
+source-model identity.
 
 ## AWS operations and cost
 

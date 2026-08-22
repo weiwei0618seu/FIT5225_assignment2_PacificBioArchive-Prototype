@@ -20,7 +20,10 @@ Ruff cleanliness and the no-AWS-secret Linux image CI workflow.
 - frontend: 20 tests, typecheck, production build and ESLint pass;
 - both CloudFormation templates pass cfn-lint;
 - the pinned, read-only GitHub Actions workflow passes zizmor with no findings;
-- three local real fixtures match their expected classes with high confidence.
+- three local real fixtures match their expected classes with high confidence;
+- GitHub Actions run `32594837754` also passed both jobs and reproduced the same
+  three species in the Linux/amd64 Lambda image; immutable image and smoke JSON
+  are preserved under `docs/evidence/`.
 
 ## Review questions
 
@@ -31,8 +34,9 @@ Ruff cleanliness and the no-AWS-secret Linux image CI workflow.
 - How is a local model result distinguished from a Linux container result?
 - What prevents the CI workflow from accessing AWS?
 
-## Remaining gate
+## Completed gate
 
-Observe a successful `Validate and smoke ML container` Actions run and
-record its run URL, commit SHA, Linux image ID/size/architecture and smoke output.
-If it fails, fix and rerun; never re-label a partial run as passing.
+The required `Validate and smoke ML container` gate passed on run
+[`32594837754`](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32594837754),
+commit `24e54bb0d220b8b7548e758f39e4cec54716d165`. Do not confuse this
+portable-container proof with live AWS deployment; that remains Stage 6.3.
