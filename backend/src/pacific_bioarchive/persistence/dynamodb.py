@@ -202,7 +202,10 @@ class DynamoDedupRepository:
             self._table.update_item(
                 Key={"checksum": checksum},
                 UpdateExpression="SET #status = :committed REMOVE expires_at",
-                ConditionExpression="file_id = :file_id AND #status = :reserved",
+                ConditionExpression=(
+                    "file_id = :file_id AND "
+                    "(#status = :reserved OR #status = :committed)"
+                ),
                 ExpressionAttributeNames={"#status": "status"},
                 ExpressionAttributeValues={
                     ":committed": "COMMITTED",

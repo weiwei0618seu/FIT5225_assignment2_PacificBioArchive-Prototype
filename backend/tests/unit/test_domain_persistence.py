@@ -207,6 +207,9 @@ class DynamoAdapterTests(unittest.TestCase):
         self.assertIn("attribute_not_exists(checksum)", expression)
         self.assertIn("expires_at < :now", expression)
         repository.commit("a" * 64, file_id="file-1")
+        expression = table.calls[-1][1]["ConditionExpression"]
+        self.assertIn(":committed", expression)
+        repository.commit("a" * 64, file_id="file-1")
         self.assertEqual(repository.get("a" * 64).status, "COMMITTED")
 
 

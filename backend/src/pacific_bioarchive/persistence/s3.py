@@ -56,7 +56,9 @@ class S3ObjectStorage:
         )
 
     def head(self, key: str) -> ObjectInfo:
-        response = self._client.head_object(Bucket=self.bucket_name, Key=key)
+        response = self._client.head_object(
+            Bucket=self.bucket_name, Key=key, ChecksumMode="ENABLED"
+        )
         return ObjectInfo(
             size_bytes=int(response["ContentLength"]),
             content_type=response.get("ContentType", "application/octet-stream"),
@@ -78,4 +80,3 @@ class S3ObjectStorage:
 
     def delete(self, key: str) -> None:
         self._client.delete_object(Bucket=self.bucket_name, Key=key)
-

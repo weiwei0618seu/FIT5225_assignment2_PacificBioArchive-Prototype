@@ -16,6 +16,8 @@ limited.
 - Assisted with architecture planning, source-code implementation, tests,
   infrastructure-as-code, documentation, and debugging in the private
   Prototype repository.
+- Implemented and reviewed the Stage 3.2 S3-event processing orchestration,
+  including adversarial checksum, replay, storage, model, and concurrency tests.
 
 ## Human accountability
 
@@ -29,4 +31,3 @@ be fabricated.
 
 Each stage report records the generated/modified files, commands executed,
 results observed, known limitations, and the checks students should repeat.
-

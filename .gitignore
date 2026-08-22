@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 .pytest_cache/
 .coverage
 htmlcov/
@@ -35,4 +36,3 @@ tmp/
 cropped_images/
 mg_detections.json
 uploads/
-
