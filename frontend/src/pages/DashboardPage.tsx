@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function DashboardPage() {
   return (
     <main className="page dashboard">
@@ -6,7 +8,7 @@ export function DashboardPage() {
         <span className="secure-pill">Secure session</span>
       </div>
       <section className="hero-panel">
-        <div><p className="eyebrow">Pacific BioArchive</p><h2>Your wildlife evidence, organised by intelligence.</h2><p>Upload, search and manage tools arrive in the next cumulative UI stages.</p></div>
+        <div><p className="eyebrow">Pacific BioArchive</p><h2>Your wildlife evidence, organised by intelligence.</h2><p>Private checksum-first media ingest and wildlife analysis are ready.</p><Link className="button button--primary hero-action" to="/upload">Upload media</Link></div>
         <div className="signal" aria-label="System ready"><span /><span /><span /></div>
       </section>
       <section className="metric-grid" aria-label="Workspace capabilities">

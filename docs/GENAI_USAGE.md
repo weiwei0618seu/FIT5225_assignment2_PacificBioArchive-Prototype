@@ -32,6 +32,10 @@ limited.
   experience, including required-attribute registration, confirmation-code
   verification, native and Google entry points, protected routing, restored
   sessions, logout, responsive desktop/mobile styling and component tests.
+- Implemented the Stage 5.2 typed authenticated API client and full upload UI:
+  local validation and SHA-256, duplicate-aware reservation, presigned S3 PUT
+  progress, bounded asynchronous polling, recoverable failure states and
+  structured image/video wildlife results.
 
 ## Human accountability
 

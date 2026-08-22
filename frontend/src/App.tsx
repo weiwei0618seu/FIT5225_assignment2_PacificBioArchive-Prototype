@@ -7,6 +7,7 @@ import { AuthCallbackPage } from "./pages/AuthCallbackPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { UploadPage } from "./pages/UploadPage";
 import { VerifyPage } from "./pages/VerifyPage";
 
 function ProtectedRoute() {
@@ -28,6 +29,7 @@ export function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
+            <Route path="upload" element={<UploadPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -37,5 +37,15 @@ committed `pnpm-lock.yaml` provides deterministic installs.
 - API calls obtain the current ID token at request time instead of persisting
   tokens in application storage.
 
+## Upload workflow
+
+The upload page validates supported file type and the 10 MiB image / 50 MiB
+video limits before it calculates SHA-256 in the browser. It then reserves the
+checksum through the authenticated API, PUTs the file directly to the private
+S3 presigned URL with every required signed header, and polls the media record
+until it is `READY` or `FAILED`. The result view shows the private thumbnail or
+video marker, species counts, automatic/manual tags, model version and a
+short-lived link to the original.
+
 Feature-specific pages and their tests are documented by the cumulative
 Stage 5 reports in `docs/stages/`.

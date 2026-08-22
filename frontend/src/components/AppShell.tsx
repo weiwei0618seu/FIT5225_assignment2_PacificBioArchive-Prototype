@@ -20,7 +20,7 @@ export function AppShell() {
         </NavLink>
         <nav aria-label="Primary navigation">
           <NavLink to="/">Overview</NavLink>
-          <span className="nav-future" aria-disabled="true">Upload</span>
+          <NavLink to="/upload">Upload</NavLink>
           <span className="nav-future" aria-disabled="true">Search</span>
         </nav>
         <div className="account">
