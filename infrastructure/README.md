@@ -17,7 +17,8 @@ otherwise-valid update from temporarily orphaning the role's federated ARN.
   `ap-southeast-2`.
 - It uses no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF.
 - DynamoDB is on-demand; Lambda concurrency is 2/1/1; logs expire after seven
-  days; API request rates are throttled; query objects expire after one day.
+  days; the two ML functions use the account-supported 3008 MB ceiling; API
+  request rates are throttled; query objects expire after one day.
 - All three S3 buckets block public access and use HTTPS-only bucket policies.
 - CloudFront reads the private SPA bucket through SigV4 OAC.
 - A US$1 budget with a US$0.10 alert is available but disabled by default

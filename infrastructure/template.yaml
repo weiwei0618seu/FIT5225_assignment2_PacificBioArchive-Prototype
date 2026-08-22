@@ -509,7 +509,7 @@ Resources:
       PackageType: Image
       ImageUri: !Ref MlImageUri
       Role: !GetAtt AuthAndIam.Outputs.MediaProcessorRoleArn
-      MemorySize: 4096
+      MemorySize: 3008
       Timeout: 900
       EphemeralStorage:
         Size: 1024
@@ -523,7 +523,7 @@ Resources:
       PackageType: Image
       ImageUri: !Ref MlImageUri
       Role: !GetAtt AuthAndIam.Outputs.TemporaryQueryRoleArn
-      MemorySize: 4096
+      MemorySize: 3008
       Timeout: 300
       EphemeralStorage:
         Size: 1024
