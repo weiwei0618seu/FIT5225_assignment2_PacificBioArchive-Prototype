@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 from typing import Mapping
-from urllib.parse import unquote, urlsplit
 
 from pacific_bioarchive.domain.media import MediaRecord, ProcessingStatus
 from pacific_bioarchive.domain.repositories import ConflictError, MediaRepository
 from pacific_bioarchive.ml.labels import normalize_tag
 from pacific_bioarchive.ml.types import InferenceResult
+from .references import ReferenceValidationError, normalize_s3_reference
 
 
 class QueryValidationError(ValueError):
@@ -51,41 +50,12 @@ def normalize_requirements(
 
 
 def normalize_thumbnail_reference(reference: str, *, bucket_name: str | None = None) -> str:
-    value = str(reference).strip()
-    if not value:
-        raise QueryValidationError("INVALID_THUMBNAIL_URL", "Thumbnail URL is required")
-    parsed = urlsplit(value)
-    if parsed.scheme:
-        if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
-            raise QueryValidationError(
-                "INVALID_THUMBNAIL_URL", "Only HTTP(S) thumbnail URLs are supported"
-            )
-        path = unquote(parsed.path).lstrip("/")
-        host = parsed.netloc.split(":", 1)[0].lower()
-        if bucket_name:
-            expected_bucket = bucket_name.lower()
-            if host.startswith(f"{expected_bucket}.s3"):
-                key = path
-            elif host.startswith("s3") and path.startswith(f"{bucket_name}/"):
-                key = path[len(bucket_name) + 1 :]
-            else:
-                raise QueryValidationError(
-                    "INVALID_THUMBNAIL_URL", "Thumbnail URL does not belong to the media bucket"
-                )
-        else:
-            key = path
-    else:
-        key = unquote(value).lstrip("/")
-
-    pure_key = PurePosixPath(key)
-    if any(part in {"", ".", ".."} for part in pure_key.parts):
-        raise QueryValidationError("INVALID_THUMBNAIL_URL", "Thumbnail key is unsafe")
-    normalized_key = pure_key.as_posix()
-    if not normalized_key.startswith("thumbnails/") or normalized_key.endswith("/"):
-        raise QueryValidationError(
-            "INVALID_THUMBNAIL_URL", "Reference must identify a thumbnail object"
+    try:
+        return normalize_s3_reference(
+            reference, bucket_name=bucket_name, allowed_prefixes=("thumbnails/",)
         )
-    return normalized_key
+    except ReferenceValidationError as exc:
+        raise QueryValidationError("INVALID_THUMBNAIL_URL", str(exc)) from exc
 
 
 class MediaQueryService:
@@ -138,4 +108,3 @@ class MediaQueryService:
         if len(matches) > 1:
             raise ConflictError(f"Multiple media records use thumbnail key {key}")
         return matches[0] if matches else None
-

@@ -101,3 +101,11 @@ class InMemoryDedupRepository:
                 raise ConflictError("Committed checksum cannot be released")
             del self._reservations[checksum]
 
+    def remove(self, checksum: str, *, file_id: str) -> None:
+        with self._lock:
+            current = self._reservations.get(checksum)
+            if current is None:
+                return
+            if current.file_id != file_id:
+                raise ConflictError("Checksum entry does not belong to this file")
+            del self._reservations[checksum]

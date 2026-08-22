@@ -9,6 +9,7 @@ from .repositories import (
     MediaRepository,
     RecordNotFoundError,
 )
+from .storage import ObjectStorage
 
 __all__ = [
     "ConflictError",
@@ -18,7 +19,7 @@ __all__ = [
     "MediaRecord",
     "MediaRepository",
     "ProcessingStatus",
+    "ObjectStorage",
     "RecordNotFoundError",
     "utc_now",
 ]
-

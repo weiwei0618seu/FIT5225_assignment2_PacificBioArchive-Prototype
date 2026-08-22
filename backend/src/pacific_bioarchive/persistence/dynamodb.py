@@ -233,3 +233,18 @@ class DynamoDedupRepository:
                     return
                 raise ConflictError("Checksum reservation release conflict") from exc
             raise
+
+    def remove(self, checksum: str, *, file_id: str) -> None:
+        try:
+            self._table.delete_item(
+                Key={"checksum": checksum},
+                ConditionExpression="file_id = :file_id",
+                ExpressionAttributeValues={":file_id": file_id},
+            )
+        except Exception as exc:
+            if _is_conditional_failure(exc):
+                existing = self.get(checksum)
+                if existing is None:
+                    return
+                raise ConflictError("Checksum deletion conflict") from exc
+            raise
