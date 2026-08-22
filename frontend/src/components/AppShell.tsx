@@ -21,7 +21,7 @@ export function AppShell() {
         <nav aria-label="Primary navigation">
           <NavLink to="/">Overview</NavLink>
           <NavLink to="/upload">Upload</NavLink>
-          <span className="nav-future" aria-disabled="true">Search</span>
+          <NavLink to="/search">Search</NavLink>
         </nav>
         <div className="account">
           <span title={user?.username}>Signed in</span>

@@ -36,6 +36,10 @@ limited.
   local validation and SHA-256, duplicate-aware reservation, presigned S3 PUT
   progress, bounded asynchronous polling, recoverable failure states and
   structured image/video wildlife results.
+- Implemented and tested the Stage 5.3 four-mode query workspace: normalized
+  minimum-count AND search, species/manual-tag search, thumbnail-to-original
+  lookup, ephemeral image inference with signed upload and cleanup-aware
+  messaging, plus complete/empty/truncated result states.
 
 ## Human accountability
 

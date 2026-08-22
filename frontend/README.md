@@ -47,5 +47,18 @@ until it is `READY` or `FAILED`. The result view shows the private thumbnail or
 video marker, species counts, automatic/manual tags, model version and a
 short-lived link to the original.
 
+## Query workflows
+
+The search workspace provides all four assignment query paths:
+
+- one species/tag, including manual tag presence;
+- up to 20 minimum-count rows combined with strict logical AND;
+- thumbnail URL/key to a fresh original URL;
+- a temporary JPG/PNG/WebP whose detected species are used to find matches.
+
+Temporary query images use their own short-lived signed upload flow. They are
+never inserted into media/dedup records and the ML Lambda deletes the object in
+`finally` on success or failure.
+
 Feature-specific pages and their tests are documented by the cumulative
 Stage 5 reports in `docs/stages/`.

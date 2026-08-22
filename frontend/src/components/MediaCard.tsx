@@ -5,12 +5,13 @@ type Props = {
   selectable?: boolean;
   selected?: boolean;
   onSelectedChange?: (selected: boolean) => void;
+  compact?: boolean;
 };
 
-export function MediaCard({ media, selectable = false, selected = false, onSelectedChange }: Props) {
+export function MediaCard({ media, selectable = false, selected = false, onSelectedChange, compact = false }: Props) {
   const preview = media.thumbnail_url || (media.file_type === "image" ? media.original_url : null);
   return (
-    <article className={`media-card${selected ? " media-card--selected" : ""}`}>
+    <article className={`media-card${compact ? " media-card--compact" : ""}${selected ? " media-card--selected" : ""}`}>
       <div className="media-card__preview">
         {preview ? (
           <img src={preview} alt={`Preview of ${media.filename}`} />

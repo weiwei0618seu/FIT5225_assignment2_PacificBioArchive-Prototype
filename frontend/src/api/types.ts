@@ -37,6 +37,30 @@ export type UploadTicket = {
   processing_status: ProcessingStatus;
 };
 
+export type QueryResponse = {
+  media: MediaRecord[];
+  total: number;
+  truncated: boolean;
+};
+
+export type ThumbnailLookup = {
+  file_id: string;
+  original_url: string;
+};
+
+export type TemporaryQueryTicket = {
+  query_id: string;
+  temp_key: string;
+  upload_url: string;
+  required_headers: Record<string, string>;
+  expires_in: number;
+};
+
+export type TemporaryQueryResponse = QueryResponse & {
+  detected_species_counts: Record<string, number>;
+  model_version: string | null;
+};
+
 export type ApiErrorBody = {
   error?: {
     code?: string;

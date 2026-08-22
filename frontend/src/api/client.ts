@@ -1,5 +1,13 @@
 import { idToken } from "../auth/authClient";
-import type { ApiErrorBody, MediaRecord, UploadTicket } from "./types";
+import type {
+  ApiErrorBody,
+  MediaRecord,
+  QueryResponse,
+  TemporaryQueryResponse,
+  TemporaryQueryTicket,
+  ThumbnailLookup,
+  UploadTicket,
+} from "./types";
 
 export class ApiError extends Error {
   constructor(
@@ -63,8 +71,45 @@ export function getMedia(fileId: string): Promise<MediaRecord> {
   return apiRequest<MediaRecord>(`/media/${encodeURIComponent(fileId)}`);
 }
 
+export function queryRequirements(requirements: Record<string, number>): Promise<QueryResponse> {
+  return apiRequest<QueryResponse>("/queries/tags", {
+    method: "POST",
+    body: JSON.stringify({ requirements }),
+  });
+}
+
+export function querySpecies(tag: string): Promise<QueryResponse> {
+  return apiRequest<QueryResponse>(`/queries/species?tag=${encodeURIComponent(tag)}`);
+}
+
+export function lookupThumbnail(thumbnailUrl: string): Promise<ThumbnailLookup> {
+  return apiRequest<ThumbnailLookup>("/queries/thumbnail", {
+    method: "POST",
+    body: JSON.stringify({ thumbnail_url: thumbnailUrl }),
+  });
+}
+
+export function initiateTemporaryQuery(file: File, checksum: string): Promise<TemporaryQueryTicket> {
+  return apiRequest<TemporaryQueryTicket>("/queries/file/init", {
+    method: "POST",
+    body: JSON.stringify({
+      filename: file.name,
+      content_type: file.type,
+      size_bytes: file.size,
+      checksum,
+    }),
+  });
+}
+
+export function executeTemporaryQuery(ticket: TemporaryQueryTicket): Promise<TemporaryQueryResponse> {
+  return apiRequest<TemporaryQueryResponse>(`/queries/file/${encodeURIComponent(ticket.query_id)}`, {
+    method: "POST",
+    body: JSON.stringify({ temp_key: ticket.temp_key }),
+  });
+}
+
 export function putPresignedFile(
-  ticket: UploadTicket,
+  ticket: Pick<UploadTicket, "upload_url" | "required_headers">,
   file: File,
   onProgress: (percent: number) => void,
 ): Promise<void> {
