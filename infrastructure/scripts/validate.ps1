@@ -32,7 +32,7 @@ try {
         Pop-Location
     }
 
-    uvx --from cfn-lint cfn-lint infrastructure/template.yaml infrastructure/auth-and-iam.json
+    uvx --from cfn-lint cfn-lint infrastructure/template.yaml infrastructure/auth-and-iam.json infrastructure/github-oidc-bootstrap.yaml
     if ($LASTEXITCODE -ne 0) { throw 'CloudFormation lint failed.' }
 
     if (Get-Command sam -ErrorAction SilentlyContinue) {

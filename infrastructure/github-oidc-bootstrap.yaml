@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Secret-free GitHub OIDC role and retained ECR repository for Pacific BioArchive
+
+Parameters:
+  ExistingGitHubOidcProviderArn:
+    Type: String
+    Default: ''
+    Description: Existing token.actions.githubusercontent.com provider ARN, or empty to create it
+  GitHubOrganization:
+    Type: String
+    Default: weiwei0618seu
+    AllowedPattern: '^[A-Za-z0-9_.-]+$'
+  GitHubRepository:
+    Type: String
+    Default: FIT5225_assignment2_PacificBioArchive-Prototype
+    AllowedPattern: '^[A-Za-z0-9_.-]+$'
+  DeploymentBranch:
+    Type: String
+    Default: stage-6.3-aws-deployment
+    AllowedPattern: '^stage-[0-9]+\.[0-9]+-[a-z0-9-]+$'
+
+Conditions:
+  CreateGitHubOidcProvider: !Equals [!Ref ExistingGitHubOidcProviderArn, '']
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateGitHubOidcProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Purpose
+          Value: GitHubActionsEcrPush
+
+  MlImageRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: pacific-bioarchive-prototype-ml
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: >-
+          {"rules":[{"rulePriority":1,"description":"Expire untagged layers after one day","selection":{"tagStatus":"untagged","countType":"sinceImagePushed","countUnit":"days","countNumber":1},"action":{"type":"expire"}},{"rulePriority":2,"description":"Keep only the latest immutable Git image","selection":{"tagStatus":"tagged","tagPrefixList":["git-"],"countType":"imageCountMoreThan","countNumber":1},"action":{"type":"expire"}}]}
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: prototype
+
+  GitHubEcrPushRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: pba-prototype-github-ecr-push
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !If
+                - CreateGitHubOidcProvider
+                - !Ref GitHubOidcProvider
+                - !Ref ExistingGitHubOidcProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/${DeploymentBranch}'
+      Policies:
+        - PolicyName: PushOnlyVerifiedMlImage
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: EcrLogin
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: '*'
+              - Sid: PushAndVerifyOneRepository
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:CompleteLayerUpload
+                  - ecr:DescribeImages
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:InitiateLayerUpload
+                  - ecr:ListImages
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                Resource: !GetAtt MlImageRepository.Arn
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Purpose
+          Value: GitHubActionsEcrPush
+
+Outputs:
+  EcrRepositoryUri:
+    Value: !GetAtt MlImageRepository.RepositoryUri
+  GitHubEcrPushRoleArn:
+    Value: !GetAtt GitHubEcrPushRole.Arn
+  TrustedGitHubSubject:
+    Value: !Sub 'repo:${GitHubOrganization}/${GitHubRepository}:ref:refs/heads/${DeploymentBranch}'

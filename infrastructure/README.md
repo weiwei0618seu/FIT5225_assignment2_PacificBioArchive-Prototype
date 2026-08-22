@@ -1,8 +1,10 @@
 # Pacific BioArchive infrastructure
 
 `template.yaml` is the root SAM template. It packages the local
-`auth-and-iam.json` application, lightweight API ZIP and two commands from one
-pinned ML container image.
+`auth-and-iam.json` application and lightweight API ZIP, then binds two Lambda
+commands to one immutable Sydney ECR image digest. `github-oidc-bootstrap.yaml`
+creates the single retained ECR repository and a branch-bound GitHub OIDC push
+role; it does not create long-lived AWS access keys.
 
 ## Safety boundary
 
@@ -28,23 +30,36 @@ CloudFormation change set. Never upgrade the account or add paid services.
 ./infrastructure/scripts/validate.ps1
 ```
 
-The SAM CLI and Docker are additionally required to build the real ML image.
-On this workstation those tools were not initially installed, so a successful
-SAM/container build must not be claimed until Stage 6.2 records it.
+Docker is required only in GitHub Actions to build and smoke the real ML image.
+The SAM deploy consumes the resulting `@sha256` ECR URI, so AWS CloudShell needs
+the AWS CLI and SAM CLI but no Docker. Stage 6.2 records the successful portable
+container proof; Stage 6.3 must separately record ECR and live Lambda evidence.
 
 ## Deployment sequence
 
 1. Run all validation and the real Linux model smoke test.
-2. Confirm Billing/Free Plan is US$0 and the account remains on Free Plan.
-3. Deploy the secret-free native-Cognito stack with `deploy-core.ps1`.
-4. Deploy the SPA using stack outputs with `deploy-frontend.ps1`.
-5. Create the Google OAuth Web Application with the exact
+2. Confirm Billing/Free Plan is US$0, credits remain, the account remains on
+   Free Plan and the region is `ap-southeast-2`.
+3. In AWS CloudShell, upload this repository without model weights and run
+   `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/bootstrap-ecr.sh`.
+4. Manually dispatch `publish-ml-image.yml` from
+   `stage-6.3-aws-deployment` with the two bootstrap outputs. Record the
+   successful run and immutable `image_uri`; never use a mutable tag in SAM.
+5. In CloudShell, set `PBA_HOSTED_UI_DOMAIN_PREFIX`, `PBA_ML_IMAGE_URI` and
+   `PBA_CONFIRM_FREE_PLAN='US$0'`, then run
+   `bash infrastructure/scripts/deploy-core.sh`. Review the printed
+   CloudFormation change set before answering its confirmation prompt.
+   Windows operators can instead use `deploy-core.ps1` with the same digest.
+6. Deploy the SPA from CloudShell with
+   `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/deploy-frontend.sh`,
+   or use `deploy-frontend.ps1` on Windows.
+7. Create the Google OAuth Web Application with the exact
    `GoogleOAuthRedirectUrl` output.
-6. Update the root stack through CloudFormation using transient `NoEcho`
+8. Update the root stack through CloudFormation using transient `NoEcho`
    `GoogleClientId`/`GoogleClientSecret` values and
    `EnableGoogleFederation=true`. Do not put those values in Git, terminal
    history, `samconfig.toml`, screenshots or chat.
-7. Confirm one Cognito verification email and one SNS subscription email, then
+9. Confirm one Cognito verification email and one SNS subscription email, then
    run the live E2E checklist.
 
 Both deployment scripts require an explicit confirmation switch. The core

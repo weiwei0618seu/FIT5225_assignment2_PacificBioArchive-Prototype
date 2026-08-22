@@ -9,6 +9,7 @@ import yaml
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_PATH = REPOSITORY_ROOT / "infrastructure" / "template.yaml"
+BOOTSTRAP_PATH = REPOSITORY_ROOT / "infrastructure" / "github-oidc-bootstrap.yaml"
 
 
 class CloudFormationLoader(yaml.SafeLoader):
@@ -120,6 +121,34 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         for name in ("CoreApiLogGroup", "MediaProcessorLogGroup", "TemporaryQueryLogGroup"):
             self.assertEqual(self.resources[name]["Properties"]["RetentionInDays"], 7)
 
+    def test_core_api_sam_context_contains_importable_handler_and_dependencies(self) -> None:
+        function = self.resources["CoreApiFunction"]["Properties"]
+        self.assertEqual(function["CodeUri"], "../backend/src/")
+        self.assertEqual(
+            function["Handler"], "pacific_bioarchive.handlers.api.lambda_handler"
+        )
+        code_root = (TEMPLATE_PATH.parent / function["CodeUri"]).resolve()
+        self.assertTrue(code_root.joinpath("pacific_bioarchive/handlers/api.py").is_file())
+        requirements = code_root.joinpath("requirements.txt").read_text(encoding="utf-8")
+        self.assertEqual(
+            requirements.splitlines(), ["Pillow==12.0.0", "boto3==1.40.0"]
+        )
+
+    def test_ml_functions_require_one_immutable_sydney_ecr_digest(self) -> None:
+        pattern = self.template["Parameters"]["MlImageUri"]["AllowedPattern"]
+        valid = (
+            "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/"
+            f"pacific-bioarchive-prototype-ml@sha256:{'a' * 64}"
+        )
+        self.assertIsNotNone(re.fullmatch(pattern, valid))
+        self.assertIsNone(re.fullmatch(pattern, valid.replace("ap-southeast-2", "us-east-1")))
+        self.assertIsNone(re.fullmatch(pattern, valid.replace("@sha256:", ":latest")))
+        for name in ("MediaProcessorFunction", "TemporaryQueryFunction"):
+            with self.subTest(function=name):
+                resource = self.resources[name]
+                self.assertEqual(resource["Properties"]["ImageUri"], {"Ref": "MlImageUri"})
+                self.assertNotIn("Metadata", resource)
+
     def test_model_runtime_is_frozen_and_models_are_not_downloaded_at_runtime(self) -> None:
         for name in ("requirements-ml.txt", "requirements-convert.txt"):
             requirements = (REPOSITORY_ROOT / "backend" / name).read_text(encoding="utf-8")
@@ -148,6 +177,53 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         self.assertIn("--force-reinstall --no-deps opencv-python-headless", dockerfile)
         self.assertNotIn("curl ", dockerfile)
         self.assertNotIn("wget ", dockerfile)
+
+
+class GitHubOidcBootstrapTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.template = yaml.load(
+            BOOTSTRAP_PATH.read_text(encoding="utf-8"), Loader=CloudFormationLoader
+        )
+        cls.resources = cls.template["Resources"]
+
+    def test_trust_is_exactly_one_repository_branch_and_audience(self) -> None:
+        statement = self.resources["GitHubEcrPushRole"]["Properties"][
+            "AssumeRolePolicyDocument"
+        ]["Statement"][0]
+        self.assertEqual(statement["Action"], "sts:AssumeRoleWithWebIdentity")
+        conditions = statement["Condition"]["StringEquals"]
+        self.assertEqual(
+            conditions["token.actions.githubusercontent.com:aud"], "sts.amazonaws.com"
+        )
+        self.assertEqual(
+            conditions["token.actions.githubusercontent.com:sub"],
+            {
+                "Sub": "repo:${GitHubOrganization}/${GitHubRepository}:"
+                "ref:refs/heads/${DeploymentBranch}"
+            },
+        )
+
+    def test_role_can_push_only_one_ecr_repository(self) -> None:
+        statements = self.resources["GitHubEcrPushRole"]["Properties"]["Policies"][0][
+            "PolicyDocument"
+        ]["Statement"]
+        login, repository = statements
+        self.assertEqual(login["Action"], "ecr:GetAuthorizationToken")
+        self.assertEqual(login["Resource"], "*")
+        self.assertEqual(repository["Resource"], {"GetAtt": "MlImageRepository.Arn"})
+        self.assertTrue(all(action.startswith("ecr:") for action in repository["Action"]))
+        self.assertNotIn("ecr:DeleteRepository", repository["Action"])
+
+    def test_repository_is_immutable_scanned_retained_and_lifecycle_bounded(self) -> None:
+        repository = self.resources["MlImageRepository"]
+        self.assertEqual(repository["DeletionPolicy"], "Retain")
+        properties = repository["Properties"]
+        self.assertEqual(properties["ImageTagMutability"], "IMMUTABLE")
+        self.assertTrue(properties["ImageScanningConfiguration"]["ScanOnPush"])
+        lifecycle = properties["LifecyclePolicy"]["LifecyclePolicyText"]
+        self.assertIn('"imageCountMoreThan"', lifecycle)
+        self.assertIn('"countNumber":1', lifecycle)
 
 
 if __name__ == "__main__":

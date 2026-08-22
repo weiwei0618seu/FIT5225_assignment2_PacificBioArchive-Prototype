@@ -3,7 +3,7 @@ name: Validate and smoke ML container
 on:
   workflow_dispatch:
   push:
-    branches: [stage-6.2-integration-e2e]
+    branches: [stage-6.2-integration-e2e, stage-6.3-aws-deployment]
     paths:
       - .github/workflows/validate-and-smoke.yml
       - backend/**
@@ -52,7 +52,7 @@ jobs:
           pnpm run build
           pnpm run lint
       - name: CloudFormation lint
-        run: uvx --from cfn-lint cfn-lint infrastructure/template.yaml infrastructure/auth-and-iam.json
+        run: uvx --from cfn-lint cfn-lint infrastructure/template.yaml infrastructure/auth-and-iam.json infrastructure/github-oidc-bootstrap.yaml
 
   model-container:
     needs: quality

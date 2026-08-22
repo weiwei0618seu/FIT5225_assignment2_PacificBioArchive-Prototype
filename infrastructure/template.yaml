@@ -44,6 +44,10 @@ Parameters:
   ModelVersion:
     Type: String
     Default: supplied-v1
+  MlImageUri:
+    Type: String
+    AllowedPattern: '^[0-9]{12}\.dkr\.ecr\.ap-southeast-2\.amazonaws\.com/[a-z0-9][a-z0-9._/-]*@sha256:[0-9a-f]{64}$'
+    Description: Immutable ap-southeast-2 ECR digest URI produced by the verified ML workflow
 
 Rules:
   DeployOnlyInSydney:
@@ -452,7 +456,7 @@ Resources:
       FunctionName: !Sub 'pba-${Environment}-core-api'
       PackageType: Zip
       Runtime: python3.12
-      CodeUri: ../backend/
+      CodeUri: ../backend/src/
       Handler: pacific_bioarchive.handlers.api.lambda_handler
       Role: !GetAtt AuthAndIam.Outputs.CoreApiRoleArn
       MemorySize: 512
@@ -503,6 +507,7 @@ Resources:
     Properties:
       FunctionName: !Sub 'pba-${Environment}-media-processor'
       PackageType: Image
+      ImageUri: !Ref MlImageUri
       Role: !GetAtt AuthAndIam.Outputs.MediaProcessorRoleArn
       MemorySize: 4096
       Timeout: 900
@@ -511,16 +516,12 @@ Resources:
       ReservedConcurrentExecutions: 1
       ImageConfig:
         Command: [pacific_bioarchive.handlers.media_processor.lambda_handler]
-    Metadata:
-      DockerContext: ..
-      Dockerfile: backend/Dockerfile.ml
-      DockerTag: !Sub 'media-${ModelVersion}'
-
   TemporaryQueryFunction:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub 'pba-${Environment}-temporary-query'
       PackageType: Image
+      ImageUri: !Ref MlImageUri
       Role: !GetAtt AuthAndIam.Outputs.TemporaryQueryRoleArn
       MemorySize: 4096
       Timeout: 300
@@ -533,11 +534,6 @@ Resources:
         ExecuteTempQuery:
           Type: HttpApi
           Properties: {ApiId: !Ref HttpApi, Path: '/queries/file/{query_id}', Method: POST}
-    Metadata:
-      DockerContext: ..
-      Dockerfile: backend/Dockerfile.ml
-      DockerTag: !Sub 'query-${ModelVersion}'
-
   OriginalObjectRule:
     Type: AWS::Events::Rule
     Properties:
