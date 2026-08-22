@@ -7,8 +7,6 @@ from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote_plus
 
-from PIL import Image
-
 from pacific_bioarchive.application.processing import (
     MediaProcessingService,
     ProcessingError,
@@ -29,6 +27,7 @@ from pacific_bioarchive.persistence.memory import (
     InMemoryDedupRepository,
     InMemoryMediaRepository,
 )
+from PIL import Image
 
 
 def jpeg_bytes() -> bytes:

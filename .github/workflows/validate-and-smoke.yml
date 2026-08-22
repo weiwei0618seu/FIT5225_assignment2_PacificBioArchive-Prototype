@@ -1,0 +1,98 @@
+name: Validate and smoke ML container
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          version: "0.8.13"
+          enable-cache: true
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: "11.19.0"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22.19.0"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Backend tests and lint
+        run: |
+          uv run --project backend --extra dev pytest -q backend/tests \
+            --cov=pacific_bioarchive.domain \
+            --cov=pacific_bioarchive.application \
+            --cov-report=term-missing \
+            --cov-fail-under=85
+          uvx ruff check backend
+      - name: Frontend checks
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run typecheck
+          pnpm run test:run
+          pnpm run build
+          pnpm run lint
+      - name: CloudFormation lint
+        run: uvx --from cfn-lint cfn-lint infrastructure/template.yaml infrastructure/auth-and-iam.json
+
+  model-container:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          lfs: true
+          persist-credentials: false
+      - name: Verify LFS model objects
+        run: |
+          test "$(stat -c%s legacy/PacificBioArchive/mdv5a.pt)" -gt 100000000
+          test "$(stat -c%s legacy/PacificBioArchive/model.pt)" -gt 100000000
+          sha256sum legacy/PacificBioArchive/mdv5a.pt legacy/PacificBioArchive/model.pt
+      - name: Build pinned Linux Lambda image
+        run: docker build --file backend/Dockerfile.ml --tag pacific-bioarchive-ml:${{ github.sha }} .
+      - name: Run supplied detector and classifier in image
+        run: |
+          mkdir -p ci-evidence
+          docker run --rm \
+            --entrypoint python \
+            --env PBA_DETECTOR_MODEL_PATH=/opt/models/mdv5a.pt \
+            --env PBA_CLASSIFIER_MODEL_PATH=/opt/models/model.torchscript \
+            --env PBA_LABELS_PATH=/opt/models/labels.txt \
+            --env PBA_FORCE_CPU=true \
+            --volume "${{ github.workspace }}/tests/fixtures/images:/fixtures:ro" \
+            --volume "${{ github.workspace }}/legacy/PacificBioArchive:/source-models:ro" \
+            --volume "${{ github.workspace }}/backend/scripts/smoke_real_models.py:/tmp/smoke_real_models.py:ro" \
+            --volume "${{ github.workspace }}/ci-evidence:/evidence" \
+            pacific-bioarchive-ml:${{ github.sha }} \
+            /tmp/smoke_real_models.py \
+            --detector /opt/models/mdv5a.pt \
+            --classifier /opt/models/model.torchscript \
+            --source-classifier /source-models/model.pt \
+            --labels /opt/models/labels.txt \
+            --fixture /fixtures/Alectura_lathami_1.JPG="australian brushturkey" \
+            --fixture /fixtures/Casuarius_casuarius_1.JPG="southern cassowary" \
+            --fixture /fixtures/Felis_catus_3.JPG="domestic cat" \
+            --output /evidence/linux-model-smoke.json
+      - name: Record immutable image evidence
+        run: |
+          docker image inspect pacific-bioarchive-ml:${{ github.sha }} \
+            --format='{"image_id":"{{.Id}}","repo_digests":{{json .RepoDigests}},"size_bytes":{{.Size}},"architecture":"{{.Architecture}}","os":"{{.Os}}"}' \
+            > ci-evidence/linux-container.json
+          cat ci-evidence/linux-container.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-container-evidence-${{ github.run_id }}
+          path: ci-evidence/
+          retention-days: 7
+          if-no-files-found: error

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
-
 
 _WHITESPACE = re.compile(r"\s+")
 _TAG_PUNCTUATION = re.compile(r"[^a-z0-9]+")
@@ -41,7 +40,7 @@ class SpeciesLabelMap:
         }
 
     @classmethod
-    def from_file(cls, path: str | Path) -> "SpeciesLabelMap":
+    def from_file(cls, path: str | Path) -> SpeciesLabelMap:
         rows: list[SpeciesLabel] = []
         for line_number, raw_line in enumerate(
             Path(path).read_text(encoding="utf-8").splitlines(), start=1

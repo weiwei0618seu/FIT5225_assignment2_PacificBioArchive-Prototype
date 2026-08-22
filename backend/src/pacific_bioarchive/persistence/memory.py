@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Sequence
 from threading import RLock
-import time
 
 from pacific_bioarchive.domain.media import MediaRecord
 from pacific_bioarchive.domain.repositories import (

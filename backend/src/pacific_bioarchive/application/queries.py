@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping
 
 from pacific_bioarchive.domain.media import MediaRecord, ProcessingStatus
 from pacific_bioarchive.domain.repositories import ConflictError, MediaRepository
 from pacific_bioarchive.ml.labels import normalize_tag
 from pacific_bioarchive.ml.types import InferenceResult
+
 from .references import ReferenceValidationError, normalize_s3_reference
 
 

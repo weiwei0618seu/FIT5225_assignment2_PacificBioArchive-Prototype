@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 from pacific_bioarchive.ml.labels import SpeciesLabelMap, normalize_tag
-
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 LABELS_PATH = REPOSITORY_ROOT / "legacy" / "PacificBioArchive" / "labels.txt"

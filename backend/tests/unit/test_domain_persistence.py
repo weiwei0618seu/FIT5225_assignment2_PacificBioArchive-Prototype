@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from decimal import Decimal
 import unittest
+from decimal import Decimal
+from typing import ClassVar
 
 from pacific_bioarchive.domain.media import MediaRecord, ProcessingStatus
 from pacific_bioarchive.domain.repositories import (
@@ -125,7 +126,9 @@ class InMemoryRepositoryTests(unittest.TestCase):
 
 
 class ConditionalFailure(Exception):
-    response = {"Error": {"Code": "ConditionalCheckFailedException"}}
+    response: ClassVar[dict[str, dict[str, str]]] = {
+        "Error": {"Code": "ConditionalCheckFailedException"}
+    }
 
 
 class FakeTable:

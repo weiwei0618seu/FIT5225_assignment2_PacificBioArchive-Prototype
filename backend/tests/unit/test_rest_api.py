@@ -7,8 +7,6 @@ import unittest
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
-
 from pacific_bioarchive.application.management import MediaManagementService
 from pacific_bioarchive.application.notifications import NotificationService
 from pacific_bioarchive.application.queries import MediaQueryService
@@ -31,6 +29,7 @@ from pacific_bioarchive.persistence.notifications import (
     InMemoryNotificationEventRepository,
     InMemorySubscriptionRepository,
 )
+from PIL import Image
 
 BUCKET = "private-media-bucket"
 

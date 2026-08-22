@@ -6,8 +6,14 @@ $repositoryRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 
 Push-Location $repositoryRoot
 try {
-    uv run --project backend --extra dev pytest -q backend/tests
+    uv run --project backend --extra dev pytest -q backend/tests `
+        --cov=pacific_bioarchive.domain `
+        --cov=pacific_bioarchive.application `
+        --cov-report=term-missing `
+        --cov-fail-under=85
     if ($LASTEXITCODE -ne 0) { throw 'Backend tests failed.' }
+    uvx ruff check backend
+    if ($LASTEXITCODE -ne 0) { throw 'Backend Ruff lint failed.' }
 
     Push-Location (Join-Path $repositoryRoot 'frontend')
     try {

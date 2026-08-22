@@ -18,11 +18,11 @@ __all__ = [
     "DuplicateFileError",
     "MediaRecord",
     "MediaRepository",
-    "ProcessingStatus",
-    "ObjectStorage",
     "ObjectInfo",
+    "ObjectStorage",
     "PresignedPut",
     "PrivateObjectStorage",
+    "ProcessingStatus",
     "RecordNotFoundError",
     "utc_now",
 ]

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Protocol, Sequence
+from typing import Protocol
 
 from PIL import Image
 
@@ -18,7 +19,7 @@ class BoundingBox:
     width: float
     height: float
 
-    def clamped(self) -> "BoundingBox":
+    def clamped(self) -> BoundingBox:
         original_left = float(self.x)
         original_top = float(self.y)
         original_right = original_left + max(float(self.width), 0.0)

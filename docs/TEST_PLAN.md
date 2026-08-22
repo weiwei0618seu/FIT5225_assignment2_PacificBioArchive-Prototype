@@ -48,3 +48,18 @@
 - SAM template validates and least-privilege assertions pass;
 - live AWS outcomes clearly separated from mocked/local evidence.
 
+## Recorded Stage 6.2 evidence
+
+- `docs/evidence/LOCAL_MODEL_SMOKE.json` records artifact/fixture SHA-256 values,
+  environment, timings and structured detections for three supplied fixtures.
+- `test_end_to_end_workflow.py` executes authenticated subscription → upload
+  reservation → exact signed headers → verified processing → thumbnail →
+  automatic query → manual tag/query → complete deletion in one test.
+- `frontend/src/api/client.test.ts` proves a fresh bearer token/no-store request,
+  stable error mapping and no network call after local session expiry.
+- `.github/workflows/validate-and-smoke.yml` is a manual, no-AWS-credential CI
+  path for the full quality gate plus a real x86_64 Linux Lambda-image build and
+  supplied two-model smoke. Its result must be linked after an observed run;
+  merely committing the workflow is not evidence that the container passed.
+- Stage 6.2 measured 90.12% coverage across domain/application code; both local
+  validation and CI fail below the declared 85% threshold.

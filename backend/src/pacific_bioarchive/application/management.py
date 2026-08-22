@@ -214,7 +214,9 @@ class MediaManagementService:
                     self._storage.delete(record.thumbnail_key)
                 self._media.delete(record.file_id)
                 self._dedup.remove(record.checksum, file_id=record.file_id)
-            except Exception:
+            # Every adapter failure must become a per-item incomplete outcome;
+            # the API must never report a destructive batch as fully complete.
+            except Exception:  # noqa: BLE001
                 outcomes.append(
                     DeleteOutcome(
                         identifier,

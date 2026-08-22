@@ -15,7 +15,6 @@ from pacific_bioarchive.persistence.memory import (
     InMemoryMediaRepository,
 )
 
-
 BUCKET = "pacific-media-bucket"
 
 
@@ -139,9 +138,9 @@ class ManagementTests(unittest.TestCase):
 
     def test_validation_missing_records_and_owner_are_preflighted(self) -> None:
         invalid_calls = [
-            dict(tags=["x"], operation=2, file_ids=["file-a"]),
-            dict(tags=[], operation=1, file_ids=["file-a"]),
-            dict(tags=["x"], operation=1, file_ids=[]),
+            {"tags": ["x"], "operation": 2, "file_ids": ["file-a"]},
+            {"tags": [], "operation": 1, "file_ids": ["file-a"]},
+            {"tags": ["x"], "operation": 1, "file_ids": []},
         ]
         for kwargs in invalid_calls:
             with self.subTest(kwargs=kwargs), self.assertRaises(ManagementValidationError):

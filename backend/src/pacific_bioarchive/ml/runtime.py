@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -27,7 +27,7 @@ class RuntimeConfig:
     force_cpu: bool = True
 
     @classmethod
-    def from_environment(cls) -> "RuntimeConfig":
+    def from_environment(cls) -> RuntimeConfig:
         return cls(
             detector_path=Path(os.environ["PBA_DETECTOR_MODEL_PATH"]),
             classifier_path=Path(os.environ["PBA_CLASSIFIER_MODEL_PATH"]),

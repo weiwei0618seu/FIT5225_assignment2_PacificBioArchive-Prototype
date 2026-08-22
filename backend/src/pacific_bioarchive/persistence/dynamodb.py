@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from decimal import Decimal
-from collections.abc import Callable
-from typing import Any, Sequence
+from typing import Any
 
 from pacific_bioarchive.domain.media import MediaRecord, ProcessingStatus
 from pacific_bioarchive.domain.repositories import (

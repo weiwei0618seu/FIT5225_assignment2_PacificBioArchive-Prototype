@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Mapping
 
 from pacific_bioarchive.media.validation import MediaType, validate_checksum
 from pacific_bioarchive.ml.labels import normalize_tag
@@ -107,7 +107,7 @@ class MediaRecord:
         automatic = int((self.species_counts or {}).get(tag, 0))
         return max(automatic, 1 if tag in self.manual_tags else 0)
 
-    def mark_processing(self, *, now: str | None = None) -> "MediaRecord":
+    def mark_processing(self, *, now: str | None = None) -> MediaRecord:
         if self.processing_status == ProcessingStatus.READY:
             return self
         return replace(
@@ -127,7 +127,7 @@ class MediaRecord:
         thumbnail_key: str | None = None,
         video_samples: int | None = None,
         now: str | None = None,
-    ) -> "MediaRecord":
+    ) -> MediaRecord:
         return replace(
             self,
             species_counts=species_counts,
@@ -141,7 +141,7 @@ class MediaRecord:
             version=self.version + 1,
         )
 
-    def mark_failed(self, error_code: str, *, now: str | None = None) -> "MediaRecord":
+    def mark_failed(self, error_code: str, *, now: str | None = None) -> MediaRecord:
         if not error_code.strip():
             raise ValueError("error_code is required")
         return replace(
@@ -154,7 +154,7 @@ class MediaRecord:
 
     def with_manual_tags(
         self, tags: set[str] | tuple[str, ...] | list[str], *, now: str | None = None
-    ) -> "MediaRecord":
+    ) -> MediaRecord:
         return replace(
             self,
             manual_tags=tuple(tags),

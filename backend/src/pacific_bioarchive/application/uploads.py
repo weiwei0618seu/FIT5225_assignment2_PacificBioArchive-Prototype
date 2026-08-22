@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
-import time
 from uuid import uuid4
 
 from pacific_bioarchive.domain.media import MediaRecord

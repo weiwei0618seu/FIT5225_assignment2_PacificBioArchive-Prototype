@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+import tempfile
+import unittest
 from hashlib import sha256
 from io import BytesIO
 from pathlib import Path
-import tempfile
-import unittest
-
-from PIL import Image
 
 from pacific_bioarchive.media.checksum import sha256_bytes, sha256_file, sha256_stream
 from pacific_bioarchive.media.image_processing import build_thumbnail
@@ -17,6 +15,7 @@ from pacific_bioarchive.media.validation import (
     validate_checksum,
     validate_upload_metadata,
 )
+from PIL import Image
 
 
 class ChecksumTests(unittest.TestCase):

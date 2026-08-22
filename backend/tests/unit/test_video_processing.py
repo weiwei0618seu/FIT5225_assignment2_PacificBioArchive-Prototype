@@ -1,10 +1,8 @@
 from __future__ import annotations
 
+import unittest
 from collections import deque
 from pathlib import Path
-import unittest
-
-from PIL import Image
 
 from pacific_bioarchive.media.video_processing import (
     VideoFrame,
@@ -13,6 +11,7 @@ from pacific_bioarchive.media.video_processing import (
     whole_second_timestamps,
 )
 from pacific_bioarchive.ml.types import InferenceResult, SpeciesDetection
+from PIL import Image
 
 
 def detection(species: str) -> SpeciesDetection:

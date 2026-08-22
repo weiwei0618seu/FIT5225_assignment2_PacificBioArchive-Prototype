@@ -22,9 +22,9 @@ from .video_processing import (
 __all__ = [
     "MediaType",
     "MediaValidationError",
+    "OpenCVFrameSampler",
     "ThumbnailResult",
     "UploadMetadata",
-    "OpenCVFrameSampler",
     "VideoFrame",
     "VideoInferenceResult",
     "VideoInferenceService",

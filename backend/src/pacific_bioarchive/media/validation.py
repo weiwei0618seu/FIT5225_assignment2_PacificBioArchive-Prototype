@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import PurePosixPath
-import re
-import unicodedata
-
 
 MIB = 1024 * 1024
 DEFAULT_MAX_IMAGE_BYTES = 10 * MIB

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
+import unittest
 from collections import deque
 from pathlib import Path
-import unittest
-
-from PIL import Image
 
 from pacific_bioarchive.ml.inference import WildlifeInferenceService
 from pacific_bioarchive.ml.labels import SpeciesLabelMap
@@ -13,7 +11,7 @@ from pacific_bioarchive.ml.types import (
     ClassifierPrediction,
     DetectionCandidate,
 )
-
+from PIL import Image
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 LABELS_PATH = REPOSITORY_ROOT / "legacy" / "PacificBioArchive" / "labels.txt"

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import base64
-from pathlib import Path
 import tempfile
 import unittest
+from pathlib import Path
 
 from pacific_bioarchive.application.uploads import UploadService
 from pacific_bioarchive.domain.repositories import DuplicateFileError
@@ -82,13 +82,13 @@ class UploadServiceTests(unittest.TestCase):
         self.assertEqual(ticket.upload.expires_in, 900)
 
     def test_duplicate_content_is_rejected_before_second_record_or_url(self) -> None:
-        arguments = dict(
-            actor_sub="user-1",
-            filename="first.jpg",
-            content_type="image/jpeg",
-            size_bytes=50,
-            checksum="b" * 64,
-        )
+        arguments = {
+            "actor_sub": "user-1",
+            "filename": "first.jpg",
+            "content_type": "image/jpeg",
+            "size_bytes": 50,
+            "checksum": "b" * 64,
+        }
         self.service.initiate(**arguments)
         with self.assertRaises(DuplicateFileError) as duplicate:
             self.service.initiate(**{**arguments, "filename": "renamed.jpg"})
@@ -197,4 +197,3 @@ class S3AdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

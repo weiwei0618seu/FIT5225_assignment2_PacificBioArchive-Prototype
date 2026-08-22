@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-22T19:01:34+00:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python_version": "3.12.13",
+  "force_cpu": true,
+  "source_artifacts": {
+    "detector": {
+      "path": "legacy/PacificBioArchive/mdv5a.pt",
+      "sha256": "fe3e90e4b1955821ab7c1f88b446dc0c8cb25e109fdd1872916a55305294a5ef"
+    },
+    "source_classifier": {
+      "path": "legacy/PacificBioArchive/model.pt",
+      "sha256": "dfc99bd1e0c8b14c6755f4504460c414f678e72936d5f849f9947dff84ca913a"
+    },
+    "classifier_torchscript": {
+      "path": "tmp/model.torchscript",
+      "sha256": "a62ec6c769789386c02ce52342d93971cf4cd8754941caf4d1fc0258f7dcfebb"
+    },
+    "labels": {
+      "path": "legacy/PacificBioArchive/labels.txt",
+      "sha256": "793e7bfae8e08e380efdf8d1fec0ac85ef25b19ea4cc925649349e093d01be11"
+    }
+  },
+  "total_elapsed_seconds": 11.99,
+  "results": [
+    {
+      "fixture": "tests/fixtures/images/Alectura_lathami_1.JPG",
+      "fixture_sha256": "a55dc44ee044c09230929b247b78992e7e9b833bc755f083e093db8b681f6854",
+      "expected_tag": "australian brushturkey",
+      "elapsed_seconds": 7.415,
+      "species_counts": {
+        "australian brushturkey": 1
+      },
+      "detections": [
+        {
+          "species": "australian brushturkey",
+          "scientific_name": "alectura_lathami",
+          "detection_confidence": 0.961,
+          "classification_confidence": 0.99996,
+          "combined_confidence": 0.960961,
+          "bbox_pixels": [
+            128,
+            745,
+            1188,
+            1397
+          ]
+        }
+      ],
+      "model_version": "supplied-v1"
+    },
+    {
+      "fixture": "tests/fixtures/images/Casuarius_casuarius_1.JPG",
+      "fixture_sha256": "3317f3ac49cf7b82945d83dd6fa4b495b7b9371d267c946f3c8b5cd1dfd6d446",
+      "expected_tag": "southern cassowary",
+      "elapsed_seconds": 2.409,
+      "species_counts": {
+        "southern cassowary": 1
+      },
+      "detections": [
+        {
+          "species": "southern cassowary",
+          "scientific_name": "Casuarius_casuarius",
+          "detection_confidence": 0.957,
+          "classification_confidence": 1.0,
+          "combined_confidence": 0.957,
+          "bbox_pixels": [
+            3045,
+            495,
+            4485,
+            2072
+          ]
+        }
+      ],
+      "model_version": "supplied-v1"
+    },
+    {
+      "fixture": "tests/fixtures/images/Felis_catus_3.JPG",
+      "fixture_sha256": "d3c7920a251ebd7199443e3d66c2b9b1b839dc3769c9332cb0b0ee228d80dd47",
+      "expected_tag": "domestic cat",
+      "elapsed_seconds": 1.574,
+      "species_counts": {
+        "domestic cat": 1
+      },
+      "detections": [
+        {
+          "species": "domestic cat",
+          "scientific_name": "felis_catus",
+          "detection_confidence": 0.959,
+          "classification_confidence": 0.993952,
+          "combined_confidence": 0.9532,
+          "bbox_pixels": [
+            115,
+            3,
+            2045,
+            1356
+          ]
+        }
+      ],
+      "model_version": "supplied-v1"
+    }
+  ]
+}

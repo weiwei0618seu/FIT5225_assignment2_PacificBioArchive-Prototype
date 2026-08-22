@@ -49,6 +49,10 @@ limited.
   deployment scripts and infrastructure tests. Diagnosed the supplied-model
   protobuf conflict and implemented a numerically verified, no-retraining
   build-stage conversion from the supplied classifier pickle to TorchScript.
+- Ran the Stage 6.2 supplied detector and classifier against three real supplied
+  fixtures, recorded hash-bound confidence evidence, added a complete local
+  upload-to-delete integration regression, authenticated frontend API tests,
+  full backend Ruff cleanup and a manual Linux image build/smoke workflow.
 
 ## Human accountability
 
