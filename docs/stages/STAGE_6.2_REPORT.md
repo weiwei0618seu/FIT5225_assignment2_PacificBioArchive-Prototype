@@ -122,6 +122,18 @@ script mounted under `/tmp` did not automatically add the application location
 The container smoke now supplies `PYTHONPATH=/var/task` explicitly; production
 Lambda execution continues to use the base image's standard runtime entrypoint.
 
+[Run #4](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32594457374)
+on commit `22aedf5323f379d8e3cc1e6a4b3f14d109dac9fa` passed quality and
+again built the image. The smoke script imported the application and began the
+first supplied fixture, but MegaDetector's transitive GUI `opencv-python`
+distribution had overwritten the pinned headless `cv2`; importing it failed on
+the Lambda base image's intentionally absent `libxcb.so.1`. No model result or
+artifact was recorded. The GUI distribution is now version-pinned for stable
+resolution, checked with the rest of the dependency graph, then removed in the
+same image layer and replaced by the pinned headless wheel. An explicit `cv2`
+version/import assertion protects this server-safe substitution without adding
+X11 libraries or GUI surface to the Lambda image.
+
 ## AWS operations and cost
 
 None. No AWS credentials are used by the CI definition, and no AWS resource or

@@ -24,6 +24,9 @@ COPY backend/requirements-ml.txt /tmp/requirements-ml.txt
 RUN python -m pip install --upgrade pip==25.2 && \
     python -m pip install --requirement /tmp/requirements-ml.txt && \
     python -m pip check && \
+    python -m pip uninstall --yes opencv-python && \
+    python -m pip install --force-reinstall --no-deps opencv-python-headless==4.12.0.88 && \
+    python -c "import cv2; assert cv2.__version__ == '4.12.0'" && \
     rm -rf /root/.cache /tmp/requirements-ml.txt
 
 COPY backend/src/pacific_bioarchive ${LAMBDA_TASK_ROOT}/pacific_bioarchive

@@ -144,6 +144,8 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         self.assertIn("/opt/models/model.torchscript", dockerfile)
         self.assertIn("rglob('__pycache__')", dockerfile)
         self.assertNotIn("find ${LAMBDA_TASK_ROOT}", dockerfile)
+        self.assertIn("pip uninstall --yes opencv-python", dockerfile)
+        self.assertIn("--force-reinstall --no-deps opencv-python-headless", dockerfile)
         self.assertNotIn("curl ", dockerfile)
         self.assertNotIn("wget ", dockerfile)
 
