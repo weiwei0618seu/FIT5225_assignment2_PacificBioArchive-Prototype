@@ -13,6 +13,7 @@ from .management import (
     ManagementValidationError,
     TagEditResult,
 )
+from .uploads import UploadService, UploadTicket
 
 __all__ = [
     "MediaQueryService",
@@ -24,4 +25,6 @@ __all__ = [
     "MediaManagementService",
     "ManagementValidationError",
     "TagEditResult",
+    "UploadService",
+    "UploadTicket",
 ]
