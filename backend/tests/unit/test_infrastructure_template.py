@@ -199,10 +199,20 @@ class GitHubOidcBootstrapTests(unittest.TestCase):
         self.assertEqual(
             conditions["token.actions.githubusercontent.com:sub"],
             {
-                "Sub": "repo:${GitHubOrganization}/${GitHubRepository}:"
+                "Sub": "repo:${GitHubOrganization}@${GitHubOrganizationId}/"
+                "${GitHubRepository}@${GitHubRepositoryId}:"
                 "ref:refs/heads/${DeploymentBranch}"
             },
         )
+        parameters = self.template["Parameters"]
+        self.assertEqual(parameters["GitHubOrganizationId"]["Default"], "265754710")
+        self.assertEqual(parameters["GitHubRepositoryId"]["Default"], "1339555089")
+
+    def test_oidc_provider_is_retained_across_repeat_bootstrap_updates(self) -> None:
+        provider = self.resources["GitHubOidcProvider"]
+        self.assertEqual(provider["DeletionPolicy"], "Retain")
+        self.assertEqual(provider["UpdateReplacePolicy"], "Retain")
+        self.assertEqual(provider["Properties"]["ClientIdList"], ["sts.amazonaws.com"])
 
     def test_role_can_push_only_one_ecr_repository(self) -> None:
         statements = self.resources["GitHubEcrPushRole"]["Properties"]["Policies"][0][
