@@ -64,3 +64,25 @@
   committing the workflow is not evidence that the container passed.
 - Stage 6.2 measured 90.12% coverage across domain/application code; both local
   validation and CI fail below the declared 85% threshold.
+
+## Final delivery gates
+
+The portable final-delivery audit verifies the approved Prototype origin,
+sequential pushed branches, all stage reports/handoffs, required project
+documents, implementation surfaces, committed-secret/local-path exclusions and
+both supplied Git LFS model objects before running the complete validation:
+
+```powershell
+./scripts/verify-final-delivery.ps1
+```
+
+After live AWS E2E evidence, sanitized UI screenshots, the final Team Report
+PDF and the pushed final handoff branch exist, the strict completion gate is:
+
+```powershell
+./scripts/verify-final-delivery.ps1 -RequireFinalState
+```
+
+The strict gate must not be weakened to manufacture completion. Missing human
+email confirmations, member data, live AWS evidence or final artifacts remain
+explicit blockers until actually supplied or observed.

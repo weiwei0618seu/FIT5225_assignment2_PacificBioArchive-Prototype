@@ -75,7 +75,7 @@ Live, after `CREATE_COMPLETE`:
 bash infrastructure/scripts/verify-live-stack.sh
 ```
 
-Latest local result is 112 backend tests, 90.12% domain/application coverage,
+Latest local result is 114 backend tests, 90.12% domain/application coverage,
 20 frontend tests and all lint/build/template gates passing. This is not a
 substitute for the pending live run.
 

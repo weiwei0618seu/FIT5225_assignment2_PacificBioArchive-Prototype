@@ -63,6 +63,11 @@ limited.
   rejection, CloudFront, log retention and excluded paid services. Its output
   is deliberately sanitized, and it must still pass against the authenticated
   live stack before Stage 6.3 can be called complete.
+- Added a strict final-delivery audit for the Prototype-only remote, sequential
+  branch ancestry, stage documents, implementation and report artifacts,
+  credential/local-path exclusions, supplied Git LFS weights, full validation
+  and observed live/final evidence. The strict mode is designed to fail while
+  any real AWS, human-owned report or final-branch requirement is missing.
 - Drafted the deployment/user/demo guides, HD rubric audit, four-member handoff
   and official-repository integration plan. Students must verify deployment
   details, replace member placeholders and build the submitted report themselves.

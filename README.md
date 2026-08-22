@@ -140,6 +140,12 @@ rules:
   architecture icons (member IDs and live screenshots still required)
 - per-stage reports/handoffs under `docs/stages/`
 
+Before handoff, run `./scripts/verify-final-delivery.ps1`. The stricter
+`-RequireFinalState` mode additionally requires sanitized live-stack/UI/E2E
+evidence, the final Team Report PDF and a clean, pushed
+`stage-7.1-final-handoff` branch; it is expected to fail until those real final
+artifacts exist.
+
 ## Troubleshooting
 
 - **Git LFS pointer/model load failure:** run `git lfs pull`, verify file sizes

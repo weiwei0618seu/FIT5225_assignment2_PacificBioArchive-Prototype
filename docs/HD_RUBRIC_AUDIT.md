@@ -29,7 +29,7 @@ automated evidence exist but live AWS/human confirmation is still required;
 
 ## Current measured gate
 
-- backend: 112 passed (plus one Windows-only Bash availability skip);
+- backend: 114 passed (plus one Windows-only Bash availability skip);
   domain/application coverage 90.12%; Ruff pass;
 - frontend: 20 passed; TypeScript, Vitest, build and ESLint pass;
 - CloudFormation: cfn-lint pass; infrastructure security assertions pass;

@@ -13,6 +13,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 TEMPLATE_PATH = REPOSITORY_ROOT / "infrastructure" / "template.yaml"
 BOOTSTRAP_PATH = REPOSITORY_ROOT / "infrastructure" / "github-oidc-bootstrap.yaml"
 LIVE_VERIFY_PATH = REPOSITORY_ROOT / "infrastructure" / "scripts" / "verify-live-stack.sh"
+FINAL_DELIVERY_PATH = REPOSITORY_ROOT / "scripts" / "verify-final-delivery.ps1"
 
 
 class CloudFormationLoader(yaml.SafeLoader):
@@ -303,6 +304,43 @@ class LiveStackVerificationScriptTests(unittest.TestCase):
         self.assertNotIn("get-secret-value", self.script)
         self.assertNotIn("--with-decryption", self.script)
         self.assertNotRegex(self.script, r'printf[^\n]*(api_url|ml_image_uri|stack_output)')
+
+
+class FinalDeliveryVerificationScriptTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.script = FINAL_DELIVERY_PATH.read_text(encoding="utf-8")
+
+    def test_checks_repository_stage_document_model_and_secret_boundaries(self) -> None:
+        required_evidence = (
+            "FIT5225_assignment2_PacificBioArchive-Prototype",
+            "All 19 sequential stage branches and 38 stage documents exist",
+            "possible committed credential",
+            "non-portable local absolute path",
+            "lfs', 'fsck",
+            "mdv5a.pt",
+            "model.pt",
+            "infrastructure/scripts/validate.ps1",
+        )
+        for evidence in required_evidence:
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, self.script)
+
+    def test_final_mode_requires_live_evidence_report_and_pushed_clean_branch(self) -> None:
+        required_evidence = (
+            "$RequireFinalState",
+            "stage-7.1-final-handoff",
+            "LIVE_STACK_ACCEPTANCE.txt",
+            "LIVE_E2E.json",
+            "Pacific_BioArchive_Team_Report_FINAL.pdf",
+            "STAGE_7.1_REPORT.md",
+            "STAGE_7.1_HANDOFF.md",
+            "origin/stage-7.1-final-handoff",
+            "status', '--porcelain",
+        )
+        for evidence in required_evidence:
+            with self.subTest(evidence=evidence):
+                self.assertIn(evidence, self.script)
 
 
 if __name__ == "__main__":

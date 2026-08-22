@@ -60,7 +60,7 @@ Command:
 
 Latest result on 2026-08-23:
 
-- backend: 112 passed, 1 Bash-availability skip on Windows;
+- backend: 114 passed, 1 Bash-availability skip on Windows;
 - domain/application coverage: 90.12% (minimum 85%);
 - frontend: 20 passed;
 - TypeScript, production build, ESLint and Ruff: passed;
