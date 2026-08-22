@@ -142,6 +142,8 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         self.assertIn("COPY legacy/PacificBioArchive/mdv5a.pt /opt/models/mdv5a.pt", dockerfile)
         self.assertIn("COPY legacy/PacificBioArchive/model.pt /tmp/model.pt", dockerfile)
         self.assertIn("/opt/models/model.torchscript", dockerfile)
+        self.assertIn("rglob('__pycache__')", dockerfile)
+        self.assertNotIn("find ${LAMBDA_TASK_ROOT}", dockerfile)
         self.assertNotIn("curl ", dockerfile)
         self.assertNotIn("wget ", dockerfile)
 

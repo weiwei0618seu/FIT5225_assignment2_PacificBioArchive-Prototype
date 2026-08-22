@@ -103,6 +103,16 @@ sets successfully. All workflow actions were also upgraded to immutable Node 24
 revisions so the rerun does not retain the first run's Node 20 deprecation
 warning.
 
+[Run #2](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32593745736)
+on commit `9a194c4a1fb27b69ef1b1f4f75eb4cc46eb85820` again passed the
+quality job. The CPU runtime dependencies installed successfully, the supplied
+classifier converted on Linux and passed the `[1, 46]` build check, proving the
+disk remediation. The image then failed only at its final cache cleanup because
+the minimal Lambda AL2023 base image does not contain the GNU `find` command;
+no model smoke or artifact step ran. The cleanup now uses Python `pathlib` and
+`shutil`, retaining a minimal base image without adding an operating-system
+package solely for cleanup.
+
 ## AWS operations and cost
 
 None. No AWS credentials are used by the CI definition, and no AWS resource or

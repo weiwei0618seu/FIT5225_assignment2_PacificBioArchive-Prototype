@@ -33,6 +33,6 @@ COPY legacy/PacificBioArchive/labels.txt /opt/models/labels.txt
 
 RUN python -c "from pathlib import Path; from pacific_bioarchive.ml.labels import SpeciesLabelMap; labels=SpeciesLabelMap.from_file(Path('/opt/models/labels.txt')); assert len(labels) == 46" && \
     python -c "import torch; model=torch.jit.load('/opt/models/model.torchscript', map_location='cpu'); assert tuple(model(torch.zeros((1,480,480,3))).shape) == (1,46)" && \
-    find ${LAMBDA_TASK_ROOT}/pacific_bioarchive -type d -name __pycache__ -prune -exec rm -rf '{}' +
+    python -c "import shutil; from pathlib import Path; root=Path('${LAMBDA_TASK_ROOT}/pacific_bioarchive'); [shutil.rmtree(path) for path in root.rglob('__pycache__')]"
 
 CMD ["pacific_bioarchive.handlers.media_processor.lambda_handler"]
