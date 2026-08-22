@@ -2,6 +2,15 @@ name: Validate and smoke ML container
 
 on:
   workflow_dispatch:
+  push:
+    branches: [stage-6.2-integration-e2e]
+    paths:
+      - .github/workflows/validate-and-smoke.yml
+      - backend/**
+      - frontend/**
+      - infrastructure/**
+      - legacy/**
+      - tests/**
 
 permissions:
   contents: read

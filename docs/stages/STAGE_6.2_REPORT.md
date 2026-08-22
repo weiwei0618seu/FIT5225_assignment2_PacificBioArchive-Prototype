@@ -78,8 +78,9 @@ capture now has an explicit reason and scoped lint exemption.
 
 ## Linux container status
 
-The local machine has no Docker/SAM CLI. A manual GitHub Actions workflow now
-runs the same quality gate, verifies that LFS objects are real, builds the x86_64
+The local machine has no Docker/SAM CLI. A GitHub Actions workflow, available
+manually and on code changes to this stage branch, runs the same quality gate,
+verifies that LFS objects are real, builds the x86_64
 Lambda image, executes both supplied models on all three fixtures in that Linux
 image and publishes seven-day model/image evidence artifacts. All Actions are
 pinned to immutable commits, checkout credentials are not persisted and workflow

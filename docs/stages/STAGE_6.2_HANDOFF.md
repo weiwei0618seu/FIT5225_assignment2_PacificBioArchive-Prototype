@@ -33,6 +33,6 @@ Ruff cleanliness and the no-AWS-secret Linux image CI workflow.
 
 ## Remaining gate
 
-Observe a successful manual `Validate and smoke ML container` Actions run and
+Observe a successful `Validate and smoke ML container` Actions run and
 record its run URL, commit SHA, Linux image ID/size/architecture and smoke output.
 If it fails, fix and rerun; never re-label a partial run as passing.

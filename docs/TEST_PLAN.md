@@ -57,9 +57,10 @@
   automatic query → manual tag/query → complete deletion in one test.
 - `frontend/src/api/client.test.ts` proves a fresh bearer token/no-store request,
   stable error mapping and no network call after local session expiry.
-- `.github/workflows/validate-and-smoke.yml` is a manual, no-AWS-credential CI
-  path for the full quality gate plus a real x86_64 Linux Lambda-image build and
-  supplied two-model smoke. Its result must be linked after an observed run;
-  merely committing the workflow is not evidence that the container passed.
+- `.github/workflows/validate-and-smoke.yml` is a no-AWS-credential CI path,
+  available manually and on this stage branch's code changes, for the full
+  quality gate plus a real x86_64 Linux Lambda-image build and supplied
+  two-model smoke. Its result must be linked after an observed run; merely
+  committing the workflow is not evidence that the container passed.
 - Stage 6.2 measured 90.12% coverage across domain/application code; both local
   validation and CI fail below the declared 85% threshold.
