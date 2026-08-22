@@ -19,6 +19,7 @@ account_id="$(aws sts get-caller-identity --query Account --output text)"
 image_pattern="^${account_id}\\.dkr\\.ecr\\.${region}\\.amazonaws\\.com/[a-z0-9][a-z0-9._/-]*@sha256:[0-9a-f]{64}$"
 [[ "$PBA_ML_IMAGE_URI" =~ $image_pattern ]]
 [[ "$PBA_HOSTED_UI_DOMAIN_PREFIX" =~ ^[a-z0-9-]{8,63}$ ]]
+image_repository="${PBA_ML_IMAGE_URI%@*}"
 
 cd "$repository_root"
 sam validate --lint --template-file infrastructure/template.yaml --region "$region"
@@ -27,6 +28,7 @@ sam deploy \
   --stack-name "$stack_name" \
   --region "$region" \
   --resolve-s3 \
+  --image-repository "$image_repository" \
   --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND \
   --parameter-overrides \
     "HostedUiDomainPrefix=$PBA_HOSTED_UI_DOMAIN_PREFIX" \

@@ -28,6 +28,7 @@ if ($MlImageUri -notmatch $imagePattern) {
 if ($Matches.Account -ne $identity.Account) {
     throw 'MlImageUri must belong to the currently authenticated AWS account.'
 }
+$imageRepository = $MlImageUri.Split('@')[0]
 Write-Host "Deploying account $($identity.Account), region $region, stack $StackName"
 Write-Host 'Google federation is intentionally disabled for this secret-free bootstrap.'
 Write-Host "ML image: $MlImageUri"
@@ -40,6 +41,7 @@ try {
         --stack-name $StackName `
         --region $region `
         --resolve-s3 `
+        --image-repository $imageRepository `
         --capabilities CAPABILITY_IAM CAPABILITY_AUTO_EXPAND `
         --parameter-overrides "HostedUiDomainPrefix=$HostedUiDomainPrefix" "MlImageUri=$MlImageUri" 'EnableGoogleFederation=false' 'CreateCostBudget=false' `
         --confirm-changeset `
