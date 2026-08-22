@@ -111,12 +111,12 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         for name in ("MediaProcessorFunction", "TemporaryQueryFunction"):
             properties = self.resources[name]["Properties"]
             self.assertEqual(properties["PackageType"], "Image")
-            self.assertEqual(properties["ReservedConcurrentExecutions"], 1)
+            self.assertNotIn("ReservedConcurrentExecutions", properties)
             self.assertLessEqual(properties["MemorySize"], 4096)
             self.assertLessEqual(properties["Timeout"], 900)
-        self.assertEqual(
-            self.resources["CoreApiFunction"]["Properties"]["ReservedConcurrentExecutions"],
-            2,
+        self.assertNotIn(
+            "ReservedConcurrentExecutions",
+            self.resources["CoreApiFunction"]["Properties"],
         )
         for name in ("CoreApiLogGroup", "MediaProcessorLogGroup", "TemporaryQueryLogGroup"):
             self.assertEqual(self.resources[name]["Properties"]["RetentionInDays"], 7)

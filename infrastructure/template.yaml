@@ -461,7 +461,6 @@ Resources:
       Role: !GetAtt AuthAndIam.Outputs.CoreApiRoleArn
       MemorySize: 512
       Timeout: 29
-      ReservedConcurrentExecutions: 2
       Events:
         Health:
           Type: HttpApi
@@ -513,7 +512,6 @@ Resources:
       Timeout: 900
       EphemeralStorage:
         Size: 1024
-      ReservedConcurrentExecutions: 1
       ImageConfig:
         Command: [pacific_bioarchive.handlers.media_processor.lambda_handler]
   TemporaryQueryFunction:
@@ -527,7 +525,6 @@ Resources:
       Timeout: 300
       EphemeralStorage:
         Size: 1024
-      ReservedConcurrentExecutions: 1
       ImageConfig:
         Command: [pacific_bioarchive.handlers.temp_query.lambda_handler]
       Events:

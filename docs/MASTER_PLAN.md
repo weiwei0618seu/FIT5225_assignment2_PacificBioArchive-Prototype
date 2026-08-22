@@ -55,8 +55,9 @@ Prototype is complete and the four students begin their real integration work.
 - Never upgrade the AWS Free Plan.
 - Avoid NAT Gateway, EC2, RDS, OpenSearch, SageMaker, WAF, EFS, and long-running
   containers.
-- Use on-demand DynamoDB, short-lived Lambdas, API throttling, reserved
-  concurrency, upload limits, and seven-day CloudWatch retention.
+- Use on-demand DynamoDB, short-lived Lambdas, API throttling, upload limits, and
+  seven-day CloudWatch retention. Do not reserve Lambda concurrency on Academy
+  accounts that expose only AWS's minimum unreserved pool.
 - Use short demo videos and bounded frame extraction.
 - Apply S3 lifecycle cleanup to query-temp and failed uploads.
 - Tag every resource with `Project=PacificBioArchive` and `Environment=prototype`.
@@ -133,7 +134,7 @@ For each stage:
 |---|---|
 | PyTorch/MegaDetector dependency conflict | pin a tested Python 3.12 stack; separate runtime and development dependencies |
 | 493 MB model weights and Lambda package limits | Git LFS for source history; ML Lambda container and versioned model configuration |
-| ML Lambda cold start/cost | lazy singleton models, bounded concurrency, short videos, demo-sized workload |
+| ML Lambda cold start/cost | lazy singleton models, API/upload throttles, short videos, demo-sized workload |
 | duplicate uploads racing | DynamoDB conditional checksum reservation with TTL |
 | uploaded checksum is dishonest | recompute SHA-256 in processor and fail safely on mismatch |
 | public data exposure | private S3, JWT authorizer, least privilege, expiring presigned URLs |
@@ -151,4 +152,3 @@ The Prototype is complete only when all items in the TXT completion checklist
 have objective evidence, the full test suite passes, live AWS results are not
 simulated, no secret is present, all stage branches exist remotely, and each
 Rubric row has a recorded demonstration path.
-

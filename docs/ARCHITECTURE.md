@@ -86,7 +86,9 @@ durable identifier.
 
 - a template rule rejects deployment outside `ap-southeast-2`;
 - DynamoDB uses on-demand mode, API throttling is 5 requests/second, heavy
-  Lambdas have concurrency 1, and CloudWatch logs expire after seven days;
+  Lambda work is bounded by upload/video limits and timeouts, and CloudWatch
+  logs expire after seven days; reserved concurrency is omitted for compatibility
+  with AWS Academy's minimum unreserved-concurrency requirement;
 - query-temp objects expire after one day and incomplete multipart uploads abort;
 - no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF is present;
 - the root stack can bootstrap native Cognito without secrets; Google is enabled

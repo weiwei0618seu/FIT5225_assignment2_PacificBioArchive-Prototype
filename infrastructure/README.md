@@ -16,9 +16,11 @@ otherwise-valid update from temporarily orphaning the role's federated ARN.
 - The template contains a rule that rejects every region except
   `ap-southeast-2`.
 - It uses no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF.
-- DynamoDB is on-demand; Lambda concurrency is 2/1/1; logs expire after seven
-  days; the two ML functions use the account-supported 3008 MB ceiling; API
-  request rates are throttled; query objects expire after one day.
+- DynamoDB is on-demand; logs expire after seven days; the two ML functions use
+  the account-supported 3008 MB ceiling; API request rates are throttled; query
+  objects expire after one day. Reserved Lambda concurrency is intentionally
+  omitted because AWS Academy accounts must keep at least 10 executions
+  unreserved and may expose only that minimum account concurrency.
 - All three S3 buckets block public access and use HTTPS-only bucket policies.
 - CloudFront reads the private SPA bucket through SigV4 OAC.
 - A US$1 budget with a US$0.10 alert is available but disabled by default
