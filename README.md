@@ -136,6 +136,8 @@ rules:
 - [Generative AI usage](docs/GENAI_USAGE.md)
 - [four-member handoff](docs/TEAM_HANDOFF_PLAN.md) and
   [official-repository integration](docs/OFFICIAL_REPO_INTEGRATION_PLAN.md)
+- [visually verified Team Report draft](docs/report/README.md) with official AWS
+  architecture icons (member IDs and live screenshots still required)
 - per-stage reports/handoffs under `docs/stages/`
 
 ## Troubleshooting
