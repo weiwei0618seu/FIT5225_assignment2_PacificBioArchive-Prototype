@@ -53,6 +53,14 @@ limited.
   fixtures, recorded hash-bound confidence evidence, added a complete local
   upload-to-delete integration regression, authenticated frontend API tests,
   full backend Ruff cleanup and a manual Linux image build/smoke workflow.
+- Assisted with the live Stage 6.3 AWS deployment through the user's authenticated
+  Chrome session: reviewed Free Plan boundaries and CloudFormation change sets,
+  restricted GitHub OIDC to immutable private-repository IDs, published and
+  smoke-tested the immutable ECR image, and diagnosed documented AWS Academy
+  memory/concurrency quota failures without hiding failed stack attempts.
+- Drafted the deployment/user/demo guides, HD rubric audit, four-member handoff
+  and official-repository integration plan. Students must verify deployment
+  details, replace member placeholders and build the submitted report themselves.
 
 ## Human accountability
 
