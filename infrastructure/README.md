@@ -7,7 +7,9 @@ creates the single retained ECR repository and a branch-bound GitHub OIDC push
 role; it does not create long-lived AWS access keys. The trust policy matches
 the repository's customized private-repository subject, including immutable
 owner/repository IDs as well as the Stage 6.3 branch, so renaming or transferring
-the repository cannot silently broaden access.
+the repository cannot silently broaden access. The provider is retained and the
+bootstrap script preserves stack ownership on repeat deploys, preventing an
+otherwise-valid update from temporarily orphaning the role's federated ARN.
 
 ## Safety boundary
 

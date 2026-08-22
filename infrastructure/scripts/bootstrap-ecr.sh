@@ -18,9 +18,17 @@ account_id="$(aws sts get-caller-identity --query Account --output text)"
 existing_provider="$(aws iam list-open-id-connect-providers \
   --query "OpenIDConnectProviderList[?contains(Arn, 'oidc-provider/token.actions.githubusercontent.com')].Arn | [0]" \
   --output text)"
+managed_provider="$(aws cloudformation describe-stack-resource \
+  --stack-name "$stack_name" \
+  --logical-resource-id GitHubOidcProvider \
+  --region "$region" \
+  --query 'StackResourceDetail.PhysicalResourceId' \
+  --output text 2>/dev/null || true)"
 
 parameters=()
-if [[ "$existing_provider" != "None" && -n "$existing_provider" ]]; then
+if [[ "$managed_provider" == "$existing_provider" ]]; then
+  : # Keep the stack-owned provider managed by this template on repeat deploys.
+elif [[ "$existing_provider" != "None" && -n "$existing_provider" ]]; then
   parameters+=("ExistingGitHubOidcProviderArn=$existing_provider")
 fi
 

@@ -36,6 +36,8 @@ Resources:
   GitHubOidcProvider:
     Type: AWS::IAM::OIDCProvider
     Condition: CreateGitHubOidcProvider
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       Url: https://token.actions.githubusercontent.com
       ClientIdList: [sts.amazonaws.com]
