@@ -42,9 +42,11 @@ container proof; Stage 6.3 must separately record ECR and live Lambda evidence.
    Free Plan and the region is `ap-southeast-2`.
 3. In AWS CloudShell, upload this repository without model weights and run
    `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/bootstrap-ecr.sh`.
-4. Manually dispatch `publish-ml-image.yml` from
-   `stage-6.3-aws-deployment` with the two bootstrap outputs. Record the
-   successful run and immutable `image_uri`; never use a mutable tag in SAM.
+4. Verify the branch-bound `publish-ml-image.yml` run. Its non-secret role ARN
+   and repository URI are fixed to the observed bootstrap outputs because the
+   repository's baseline default branch cannot expose this later workflow for
+   manual dispatch. Record the successful run and immutable `image_uri`; never
+   use a mutable tag in SAM.
 5. In CloudShell, set `PBA_HOSTED_UI_DOMAIN_PREFIX`, `PBA_ML_IMAGE_URI` and
    `PBA_CONFIRM_FREE_PLAN='US$0'`, then run
    `bash infrastructure/scripts/deploy-core.sh`. Review the printed
