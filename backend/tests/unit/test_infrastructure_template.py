@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import unittest
 from pathlib import Path
 from typing import Any
@@ -124,7 +125,17 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
             requirements = (REPOSITORY_ROOT / "backend" / name).read_text(encoding="utf-8")
             pins = [line for line in requirements.splitlines() if line and not line.startswith("#")]
             self.assertTrue(pins)
-            self.assertTrue(all("==" in line for line in pins))
+            for pin in pins:
+                exact_version = "==" in pin and " @ " not in pin
+                hash_pinned_pytorch_wheel = re.fullmatch(
+                    r"[A-Za-z0-9_.-]+ @ https://download-r2\.pytorch\.org/"
+                    r"[^#\s]+#sha256=[0-9a-f]{64}",
+                    pin,
+                )
+                self.assertTrue(
+                    exact_version or hash_pinned_pytorch_wheel,
+                    f"Dependency is not immutably pinned: {pin}",
+                )
         dockerfile = (REPOSITORY_ROOT / "backend" / "Dockerfile.ml").read_text(
             encoding="utf-8"
         )

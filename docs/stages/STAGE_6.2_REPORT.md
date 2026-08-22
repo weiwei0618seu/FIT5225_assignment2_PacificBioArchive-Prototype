@@ -87,6 +87,22 @@ pinned to immutable commits, checkout credentials are not persisted and workflow
 permissions are read-only. The stage is not allowed to call this passed until an
 actual run is observed and linked here.
 
+### First Linux attempt and remediation
+
+[Run #1](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32593231468)
+on commit `a6bc151f396e17fde5e97938528812ded4791555` passed the complete
+quality job but failed the image build honestly with `[Errno 28] No space left
+on device`. The PyPI Linux Torch wheels had selected CUDA 12 packages despite
+the CPU-only runtime design, and the two build stages exhausted the hosted
+runner while installing them. No model smoke or artifact step ran.
+
+Both build environments now use the official PyTorch x86_64 CPU wheels by
+direct URL and SHA-256, avoiding both CUDA bloat and extra-index dependency
+confusion. `uv pip compile` then resolved both Python 3.12 Linux requirement
+sets successfully. All workflow actions were also upgraded to immutable Node 24
+revisions so the rerun does not retain the first run's Node 20 deprecation
+warning.
+
 ## AWS operations and cost
 
 None. No AWS credentials are used by the CI definition, and no AWS resource or
