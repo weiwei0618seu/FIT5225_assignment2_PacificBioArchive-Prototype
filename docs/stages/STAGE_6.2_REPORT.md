@@ -113,6 +113,15 @@ no model smoke or artifact step ran. The cleanup now uses Python `pathlib` and
 `shutil`, retaining a minimal base image without adding an operating-system
 package solely for cleanup.
 
+[Run #3](https://github.com/weiwei0618seu/FIT5225_assignment2_PacificBioArchive-Prototype/actions/runs/32594049095)
+on commit `89c79b6c00f3e177c71b12fac7280031aef82a68` passed the quality
+job and completed the full image build. The smoke command then failed before
+loading either model because overriding the Lambda entrypoint to execute a
+script mounted under `/tmp` did not automatically add the application location
+`/var/task` to Python's import path. No model result or artifact was recorded.
+The container smoke now supplies `PYTHONPATH=/var/task` explicitly; production
+Lambda execution continues to use the base image's standard runtime entrypoint.
+
 ## AWS operations and cost
 
 None. No AWS credentials are used by the CI definition, and no AWS resource or

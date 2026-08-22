@@ -79,6 +79,7 @@ jobs:
             --env PBA_CLASSIFIER_MODEL_PATH=/opt/models/model.torchscript \
             --env PBA_LABELS_PATH=/opt/models/labels.txt \
             --env PBA_FORCE_CPU=true \
+            --env PYTHONPATH=/var/task \
             --volume "${{ github.workspace }}/tests/fixtures/images:/fixtures:ro" \
             --volume "${{ github.workspace }}/legacy/PacificBioArchive:/source-models:ro" \
             --volume "${{ github.workspace }}/backend/scripts/smoke_real_models.py:/tmp/smoke_real_models.py:ro" \
