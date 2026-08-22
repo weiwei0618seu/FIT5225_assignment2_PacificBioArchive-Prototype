@@ -58,6 +58,11 @@ limited.
   restricted GitHub OIDC to immutable private-repository IDs, published and
   smoke-tested the immutable ECR image, and diagnosed documented AWS Academy
   memory/concurrency quota failures without hiding failed stack attempts.
+- Added a read-only live-stack acceptance script and regression assertions for
+  deployed Lambda/ECR state, S3 and DynamoDB controls, JWT routes, anonymous
+  rejection, CloudFront, log retention and excluded paid services. Its output
+  is deliberately sanitized, and it must still pass against the authenticated
+  live stack before Stage 6.3 can be called complete.
 - Drafted the deployment/user/demo guides, HD rubric audit, four-member handoff
   and official-repository integration plan. Students must verify deployment
   details, replace member placeholders and build the submitted report themselves.

@@ -29,7 +29,8 @@ automated evidence exist but live AWS/human confirmation is still required;
 
 ## Current measured gate
 
-- backend: 110 passed; domain/application coverage 90.12%; Ruff pass;
+- backend: 112 passed (plus one Windows-only Bash availability skip);
+  domain/application coverage 90.12%; Ruff pass;
 - frontend: 20 passed; TypeScript, Vitest, build and ESLint pass;
 - CloudFormation: cfn-lint pass; infrastructure security assertions pass;
 - real supplied model: three expected fixtures pass locally and in Linux;
@@ -39,4 +40,3 @@ automated evidence exist but live AWS/human confirmation is still required;
 The project should not be called finally complete while any READY item required
 for the core demo lacks observed live evidence. Google login may remain clearly
 documented as optional if credentials are unavailable.
-
