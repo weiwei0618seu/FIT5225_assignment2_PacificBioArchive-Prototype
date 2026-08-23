@@ -10,6 +10,11 @@ export type PublicConfig = {
 
 type Environment = Record<string, string | boolean | undefined>;
 
+export function isGoogleFederationEnabled(environment: Environment): boolean {
+  const value = environment.VITE_ENABLE_GOOGLE_FEDERATION;
+  return typeof value === "string" && value.trim().toLowerCase() === "true";
+}
+
 export function readPublicConfig(environment: Environment): PublicConfig {
   const required = {
     region: environment.VITE_AWS_REGION,

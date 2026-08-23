@@ -61,8 +61,12 @@ limited.
 - Added a read-only live-stack acceptance script and regression assertions for
   deployed Lambda/ECR state, S3 and DynamoDB controls, JWT routes, anonymous
   rejection, CloudFront, log retention and excluded paid services. Its output
-  is deliberately sanitized, and it must still pass against the authenticated
-  live stack before Stage 6.3 can be called complete.
+  is deliberately sanitized; all ten labels passed against the authenticated
+  live stack after correcting the AWS CLI empty-concurrency response handling.
+- Verified the official container-built SAM artifact by SHA-256, reviewed and
+  executed an Add-only CloudFormation change set, deployed the private SPA,
+  hid the disabled Google federation entry point, and added authenticated
+  prebuilt SAM/frontend fallbacks for constrained CloudShell runtimes.
 - Added a strict final-delivery audit for the Prototype-only remote, sequential
   branch ancestry, stage documents, implementation and report artifacts,
   credential/local-path exclusions, supplied Git LFS weights, full validation

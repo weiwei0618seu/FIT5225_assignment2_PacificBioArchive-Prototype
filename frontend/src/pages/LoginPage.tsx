@@ -3,6 +3,7 @@ import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../auth/AuthProvider";
 import { StatusMessage } from "../components/StatusMessage";
+import { isGoogleFederationEnabled } from "../config";
 
 export function LoginPage() {
   const { user, login, loginGoogle } = useAuth();
@@ -12,6 +13,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const googleFederationEnabled = isGoogleFederationEnabled(import.meta.env);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -69,10 +71,14 @@ export function LoginPage() {
             {busy ? "Signing in…" : "Sign in"}
           </button>
         </form>
-        <div className="divider"><span>or</span></div>
-        <button className="button button--google" type="button" onClick={google} disabled={busy}>
-          <span aria-hidden="true">G</span> Continue with Google
-        </button>
+        {googleFederationEnabled && (
+          <>
+            <div className="divider"><span>or</span></div>
+            <button className="button button--google" type="button" onClick={google} disabled={busy}>
+              <span aria-hidden="true">G</span> Continue with Google
+            </button>
+          </>
+        )}
         <p className="auth-switch">New to the archive? <Link to="/register">Create an account</Link></p>
       </section>
     </main>

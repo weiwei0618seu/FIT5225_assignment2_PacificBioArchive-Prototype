@@ -33,6 +33,7 @@ function renderAt(path: string) {
 describe("authentication UI", () => {
   beforeEach(() => {
     vi.mocked(authClient.currentUser).mockResolvedValue(null);
+    vi.stubEnv("VITE_ENABLE_GOOGLE_FEDERATION", "false");
   });
 
   it("redirects an unauthenticated protected route to login", async () => {
@@ -73,9 +74,16 @@ describe("authentication UI", () => {
 
   it("starts Cognito Google federation", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("VITE_ENABLE_GOOGLE_FEDERATION", "true");
     renderAt("/login");
     await user.click(screen.getByRole("button", { name: /continue with google/i }));
     expect(authClient.loginWithGoogle).toHaveBeenCalledOnce();
+  });
+
+  it("hides Google sign-in when federation is disabled", async () => {
+    renderAt("/login");
+    expect(await screen.findByRole("heading", { name: /sign in to your archive/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /continue with google/i })).not.toBeInTheDocument();
   });
 
   it("logs an authenticated user out", async () => {

@@ -81,6 +81,52 @@ Academy accounts may expose only the minimum Lambda unreserved concurrency, so
 the template deliberately omits `ReservedConcurrentExecutions`; cost is bounded
 with API/upload limits, short videos and timeouts instead.
 
+### CloudShell low-disk fallback and change-set-only mode
+
+The current CloudShell host may not have enough ephemeral root-disk space to
+unpack the official SAM build image. In that case, do not fall back to a host
+Python 3.13 build. Run the repository's pinned
+`Verify deployment build toolchain` GitHub workflow, download its
+`sam-python312-build-<run-id>` artifact and upload the two contained files to
+CloudShell. The workflow has already pulled and run the official Python 3.12
+image and created the archive with `sam build --use-container`.
+
+Prepare a change set without executing it:
+
+```bash
+export PBA_CONFIRM_FREE_PLAN='US$0'
+export PBA_HOSTED_UI_DOMAIN_PREFIX='pba-prototype-835597620771'
+export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3'
+export PBA_PREBUILT_SAM_ARCHIVE="$HOME/sam-python312-build.tar.gz"
+export PBA_PREBUILT_SAM_SHA256="$(cut -d ' ' -f 1 "$HOME/sam-python312-build.tar.gz.sha256")"
+export PBA_DEPLOY_MODE='prepare'
+bash infrastructure/scripts/deploy-core.sh
+```
+
+The script requires a 64-character SHA-256 match, rejects archive members
+outside `build/`, extracts to a short-lived directory and passes
+`--no-execute-changeset`. Review the exact proposed resources before running
+the selected change set:
+
+```bash
+AWS_PAGER='' aws cloudformation list-change-sets \
+  --stack-name pacific-bioarchive-prototype \
+  --region ap-southeast-2
+
+AWS_PAGER='' aws cloudformation describe-change-set \
+  --stack-name pacific-bioarchive-prototype \
+  --change-set-name '<reviewed-change-set-name>' \
+  --region ap-southeast-2
+
+aws cloudformation execute-change-set \
+  --stack-name pacific-bioarchive-prototype \
+  --change-set-name '<reviewed-change-set-name>' \
+  --region ap-southeast-2
+```
+
+Never execute a change set merely because it was generated successfully.
+Confirm the account, region, immutable image digest and resource types first.
+
 After completion, capture outputs without secrets:
 
 ```bash
@@ -99,6 +145,20 @@ The script reads stack outputs, creates ignored
 `frontend/.env.production.local`, builds the SPA, syncs it to the private
 frontend bucket, and invalidates CloudFront. Public identifiers in the generated
 file are not credentials; never add Cognito passwords/tokens or OAuth secrets.
+
+pnpm `11.19.0` requires Node.js 22.13 or newer. If the deployment host exposes
+an older Node.js, build `frontend/dist` on a compatible host after generating
+the production environment file, ZIP the contents of `dist` at the archive
+root, upload the ZIP and deploy it through the authenticated fallback:
+
+```bash
+export PBA_PREBUILT_FRONTEND_ARCHIVE=/home/cloudshell-user/pba-frontend.zip
+export PBA_PREBUILT_FRONTEND_SHA256='<observed-64-character-sha256>'
+PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/deploy-frontend.sh
+```
+
+The fallback validates the SHA-256, ZIP integrity and member boundaries before
+syncing. It never treats an incompatible Node runtime as a successful build.
 
 ## 5. Verify native Cognito and SNS
 

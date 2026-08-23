@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { readPublicConfig } from "./config";
+import { isGoogleFederationEnabled, readPublicConfig } from "./config";
 
 const valid = {
   VITE_AWS_REGION: "ap-southeast-2",
@@ -19,5 +19,11 @@ describe("readPublicConfig", () => {
 
   it("fails fast when deployment output is missing", () => {
     expect(() => readPublicConfig({ ...valid, VITE_API_BASE_URL: "" })).toThrow("apiBaseUrl");
+  });
+
+  it("enables Google federation only for an explicit true value", () => {
+    expect(isGoogleFederationEnabled({ VITE_ENABLE_GOOGLE_FEDERATION: " TRUE " })).toBe(true);
+    expect(isGoogleFederationEnabled({ VITE_ENABLE_GOOGLE_FEDERATION: "false" })).toBe(false);
+    expect(isGoogleFederationEnabled({})).toBe(false);
   });
 });

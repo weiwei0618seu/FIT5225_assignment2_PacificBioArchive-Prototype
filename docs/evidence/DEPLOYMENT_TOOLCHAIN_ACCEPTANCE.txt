@@ -1,0 +1,40 @@
+Pacific BioArchive deployment toolchain acceptance
+Observed date: 2026-08-23
+Region: ap-southeast-2
+AWS account: 835597620771
+
+RESULT: PASS
+
+GitHub Actions
+- Workflow: Verify deployment build toolchain
+- Run: 32610702537
+- Job: 97123189935
+- Commit: 410b65c61f70059956faa181a496f5e1126e83f7
+- Conclusion observed in GitHub UI: Success
+- Duration observed in GitHub UI: 2m 30s
+
+Successful enforced checks
+- Pulled public.ecr.aws/sam/build-python3.12:latest-x86_64.
+- Ran the image with a Python 3.12 version assertion.
+- Completed sam build --use-container --parallel.
+- Verified that .aws-sam/build/template.yaml was generated.
+- Asserted pnpm version 11.19.0.
+- Installed the frozen frontend lockfile and completed the production build.
+
+AWS preflight and failed-stack record
+- Initial stack state: ROLLBACK_COMPLETE.
+- Checked monthly Cost Explorer amount: -0.0000000001 USD (effectively US$0).
+- CloudFormation stack-delete waiter exit code: 0.
+- Post-delete describe-stacks result: stack does not exist.
+
+CloudShell Docker fallback observation
+- The first automatic SAM pull did not leave the requested image and the build
+  exited 1 with a No such image message.
+- An explicit pull verified and unpacked layers but exhausted the 16 GB
+  ephemeral root disk before the image could be committed.
+- The exact pull process was stopped; Docker then reported zero images,
+  containers, volumes and build cache, and root usage returned to 41%.
+- No retained S3 bucket or Cognito user pool was deleted.
+
+This record contains no credentials, tokens, pre-signed URLs, email codes or
+private user data.

@@ -33,6 +33,9 @@ committed `pnpm-lock.yaml` provides deterministic installs.
 - Cognito sends and verifies the confirmation code.
 - Native and Google users enter the same protected application shell.
 - Google login uses Cognito federation with authorization code flow and PKCE.
+- The Google button is shown only when `VITE_ENABLE_GOOGLE_FEDERATION=true`
+  matches an enabled Cognito identity provider; native Cognito remains the
+  fail-closed default.
 - A restored Cognito session survives page reloads; sign-out clears it.
 - API calls obtain the current ID token at request time instead of persisting
   tokens in application storage.

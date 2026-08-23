@@ -149,6 +149,24 @@ try {
     Assert-Condition ($bashCoreDeploy -match `
         'sam\s+build\s+--use-container\b') `
         'the CloudShell deployment path does not use the Lambda-matched SAM build container'
+    Assert-Condition (($bashCoreDeploy -match 'PBA_PREBUILT_SAM_ARCHIVE') -and `
+        ($bashCoreDeploy -match 'PBA_PREBUILT_SAM_SHA256') -and `
+        ($bashCoreDeploy -match 'sha256sum\s+"\$prebuilt_archive"')) `
+        'the CloudShell deployment path does not authenticate a portable SAM build artifact'
+    Assert-Condition (($bashCoreDeploy -match 'PBA_DEPLOY_MODE') -and `
+        ($bashCoreDeploy -match '--no-execute-changeset')) `
+        'the CloudShell deployment path cannot stop for change-set review'
+
+    $bashFrontendDeploy = Get-Content -LiteralPath `
+        'infrastructure/scripts/deploy-frontend.sh' -Raw
+    Assert-Condition (($bashFrontendDeploy -match 'PBA_PREBUILT_FRONTEND_ARCHIVE') -and `
+        ($bashFrontendDeploy -match 'PBA_PREBUILT_FRONTEND_SHA256') -and `
+        ($bashFrontendDeploy -match 'sha256sum\s+"\$prebuilt_archive"') -and `
+        ($bashFrontendDeploy -match 'unzip\s+-tqq')) `
+        'the CloudShell frontend path does not authenticate a portable build artifact'
+    Assert-Condition (($bashFrontendDeploy -match 'pnpm@11\.19\.0') -and `
+        ($bashFrontendDeploy -match 'major\s*===\s*22\s*&&\s*minor\s*>=\s*13')) `
+        'the frontend build path does not enforce the pnpm-compatible Node runtime'
 
     $windowsCoreDeploy = Get-Content -LiteralPath `
         'infrastructure/scripts/deploy-core.ps1' -Raw
@@ -162,7 +180,7 @@ try {
 
     $trackedFiles = @(Invoke-Git -GitArguments @('ls-files'))
     $forbiddenTracked = @($trackedFiles | Where-Object {
-        (($_ -match '(^|/)\.env($|\.)') -and $_ -ne '.env.example') -or
+        (($_ -match '(^|/)\.env($|\.)') -and $_ -notmatch '(^|/)\.env\.example$') -or
         $_ -match '\.(pem|key)$' -or
         $_ -match '(^|/)samconfig\.toml$' -or
         $_ -match '(^|/)(node_modules|dist|coverage|__pycache__)/'

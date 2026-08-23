@@ -1,0 +1,37 @@
+Pacific BioArchive live stack acceptance
+Observed date: 2026-08-23
+Region: ap-southeast-2
+AWS account: 835597620771
+Stack: pacific-bioarchive-prototype
+
+RESULT: PASS
+
+Observed deployment controls
+- The reviewed 39-resource change set contained Add actions only.
+- The root and nested templates contained no excluded high-cost service type.
+- Google federation remained disabled and CreateCostBudget remained disabled.
+- The ML image parameter used the verified immutable Sydney ECR digest.
+- The same-name root stack reached CREATE_COMPLETE with no failed or rollback event.
+- The frontend production archive SHA-256 was verified before S3 synchronization.
+- The second CloudFront invalidation completed after the federation-visibility fix.
+
+Read-only live acceptance output
+- PASS: CloudFormation stack is CREATE_COMPLETE
+- PASS: No EC2, NAT, RDS, OpenSearch, SageMaker, EFS or WAF resources are in the stack
+- PASS: All Lambdas are active, bounded, unreserved and use the expected ML digest
+- PASS: All S3 buckets block public access, encrypt at rest and require TLS
+- PASS: All DynamoDB tables are active, encrypted and PAY_PER_REQUEST
+- PASS: Every required live API route uses JWT authorization
+- PASS: Unauthenticated /health is rejected with HTTP 401
+- PASS: CloudFront is enabled and deployed
+- PASS: All Lambda log groups retain data for seven days
+- PASS: Live stack verification completed without emitting endpoints, credentials or secrets
+
+Anonymous browser acceptance
+- The CloudFront root redirected to the native Cognito sign-in page.
+- The registration route rendered all required name, email and password fields.
+- The disabled Google federation option was not exposed after the deployment fix.
+- No browser warning or error was emitted on the checked login/register routes.
+
+This record contains no credentials, JWTs, email addresses, confirmation codes,
+pre-signed URLs, OAuth secrets or private user data.

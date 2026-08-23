@@ -64,11 +64,21 @@ evidence.
    `bash infrastructure/scripts/deploy-core.sh`. Review the printed
    CloudFormation change set before answering its confirmation prompt. The
    first build may pull the official SAM Python 3.12 build image through the
-   available Docker runtime.
+   available Docker runtime. If CloudShell cannot unpack that image because of
+   its ephemeral disk limit, use the SHA-256 sidecar and portable build archive
+   produced by `.github/workflows/verify-deployment-toolchain.yml`; set
+   `PBA_PREBUILT_SAM_ARCHIVE`, `PBA_PREBUILT_SAM_SHA256` and
+   `PBA_DEPLOY_MODE=prepare`. The script verifies and extracts that container-
+   built artifact, creates the change set with `--no-execute-changeset`, and
+   leaves execution to a separate reviewed command.
    Windows operators can instead use `deploy-core.ps1` with the same digest.
 6. Deploy the SPA from CloudShell with
    `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/deploy-frontend.sh`,
-   or use `deploy-frontend.ps1` on Windows.
+   or use `deploy-frontend.ps1` on Windows. pnpm 11.19.0 requires Node.js
+   22.13+; on an older CloudShell host, set `PBA_PREBUILT_FRONTEND_ARCHIVE` and
+   `PBA_PREBUILT_FRONTEND_SHA256` to a production-configured ZIP whose contents
+   are rooted at `index.html`. The Bash script authenticates and boundary-checks
+   that archive before synchronization.
 7. Run the read-only live acceptance gate. It prints only pass/fail labels and
    intentionally suppresses endpoints and AWS response bodies:
 

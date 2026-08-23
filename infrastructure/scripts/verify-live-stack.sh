@@ -110,7 +110,12 @@ for function_spec in \
   fi
 
   concurrency="$(aws_json lambda get-function-concurrency --function-name "$function_name")"
-  if ! jq -e '.ReservedConcurrentExecutions == null' <<<"$concurrency" >/dev/null; then
+  # AWS CLI emits an empty successful response when no function concurrency
+  # configuration exists. Other CLI builds render the same state as an empty
+  # JSON object, so accept both representations while still rejecting any
+  # concrete reserved-concurrency value.
+  if [[ -n "$concurrency" ]] &&
+    ! jq -e '.ReservedConcurrentExecutions == null' <<<"$concurrency" >/dev/null; then
     fail "A Lambda function has reserved concurrency in the Academy account"
   fi
 

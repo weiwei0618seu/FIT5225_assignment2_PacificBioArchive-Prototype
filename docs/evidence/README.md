@@ -32,6 +32,16 @@ Live AWS evidence belongs in a separate Stage 6.3 file and must only be added
 after observing the deployed account. Never manufacture URLs, resource IDs,
 cost values, email status or CloudWatch results.
 
+Observed Stage 6.3 evidence:
+
+- `DEPLOYMENT_TOOLCHAIN_ACCEPTANCE.txt` records the official SAM Python 3.12
+  container, pnpm 11.19.0, free-plan preflight and failed-stack deletion gate.
+- `LIVE_STACK_ACCEPTANCE.txt` records the reviewed change set, successful root
+  stack, frontend publication and sanitized ten-item live acceptance result.
+- `live-ui/` contains empty-field registration/login screenshots. Authenticated
+  UI/ML and email-confirmation evidence remains pending until a student uses a
+  controlled recipient account.
+
 `LIVE_E2E.json` is deliberately absent until the complete live workflow has
 been observed. Before it can satisfy the final gate, run:
 

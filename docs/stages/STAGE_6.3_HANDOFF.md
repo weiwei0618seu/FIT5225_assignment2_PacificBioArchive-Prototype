@@ -7,8 +7,9 @@ observed AWS deployment. It covers GitHub OIDC/ECR publication, CloudFormation
 quota remediation, same-name stack deployment, private SPA delivery, live
 security/cost acceptance and the complete browser demonstration.
 
-The stage is still in progress while the AWS sign-in and live acceptance gates
-remain pending. Do not present it as completed from local tests alone.
+The same-name root stack, frontend and sanitized infrastructure acceptance are
+complete. The stage remains in progress only for authenticated UI/ML evidence
+and the Cognito/SNS confirmations that require a controlled email recipient.
 
 ## Key files
 
@@ -28,14 +29,12 @@ remain pending. Do not present it as completed from local tests alone.
 
 ## Required operator sequence
 
-1. Confirm the browser is authenticated to account `835597620771` in Sydney
-   and Billing/Free Plan still reports US$0 with available free allowance.
-2. Confirm the old root stack is exactly `ROLLBACK_COMPLETE`; delete that stack
-   record only. Retained media/model/Cognito resources require deliberate
-   review and must not be broadly deleted.
-3. Reuse stack name `pacific-bioarchive-prototype` and the recorded immutable
-   ECR digest. Review the generated change set before execution.
-4. Wait for `CREATE_COMPLETE`, deploy the SPA, then run:
+1. Confirm the browser is authenticated to account `835597620771` in Sydney,
+   Billing/Free Plan still reports approximately US$0, and the accepted stack
+   remains `CREATE_COMPLETE`.
+2. Preserve the retained media/model/Cognito resources from the two failed
+   attempts; they require deliberate review and must not be broadly deleted.
+3. Re-run the sanitized read-only gate when rehearsing:
 
    ```bash
    bash -n infrastructure/scripts/verify-live-stack.sh
@@ -43,9 +42,9 @@ remain pending. Do not present it as completed from local tests alone.
      | tee docs/evidence/LIVE_STACK_ACCEPTANCE.txt
    ```
 
-5. Use the deployed UI for the full `docs/DEMO_PLAN.md` sequence. Cognito email
+4. Use the deployed UI for the full `docs/DEMO_PLAN.md` sequence. Cognito email
    verification and SNS email confirmation require a human recipient.
-6. Remove live demo media through the application and verify the corresponding
+5. Remove live demo media through the application and verify the corresponding
    objects, records and deduplication state are gone. Retained infrastructure
    cleanup is a separate, explicitly authorized task.
 
@@ -75,9 +74,10 @@ Live, after `CREATE_COMPLETE`:
 bash infrastructure/scripts/verify-live-stack.sh
 ```
 
-Latest local result is 114 backend tests, 90.12% domain/application coverage,
-20 frontend tests and all lint/build/template gates passing. This is not a
-substitute for the pending live run.
+Latest local result is 114 backend tests, one Windows Bash skip, 90.12%
+domain/application coverage, 22 frontend tests and all lint/build/template
+gates passing. The live script emitted all ten expected PASS labels; see
+`docs/evidence/LIVE_STACK_ACCEPTANCE.txt`.
 
 ## Likely demonstration questions
 
