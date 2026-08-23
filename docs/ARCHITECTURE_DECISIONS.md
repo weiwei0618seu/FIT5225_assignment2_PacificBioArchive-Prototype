@@ -70,9 +70,11 @@ and never become Lambda or frontend environment variables.
 
 The core API, upload processor and temporary-query ML function have different
 data paths, so each receives its own role. Inline policies name exact table,
-topic and S3-prefix ARNs. The only wildcard suffix is beneath a configured
-object prefix or SNS topic subscription namespace; there is no star action or
-global star resource.
+topic and S3-prefix ARNs. There is no star action. The sole global resource is
+limited to `GetSubscriptionAttributes`, `SetSubscriptionAttributes` and
+`Unsubscribe`, because AWS SNS does not support resource-level IAM for those
+three lifecycle APIs. `Subscribe` and `Publish` remain restricted to the one
+configured topic, while S3 and DynamoDB permissions remain resource-bound.
 
 ## ADR-013 — Private CloudFront SPA origin
 

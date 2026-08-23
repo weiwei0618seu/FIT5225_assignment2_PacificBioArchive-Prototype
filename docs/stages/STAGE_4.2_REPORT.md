@@ -23,8 +23,10 @@ stack consumes this subtemplate in Stage 6.1.
 - JWT helper produces the Cognito issuer, SPA audience and Authorization-header
   identity source used by the future SAM HTTP API authorizer.
 - Core API, media processor and temporary query roles have different table,
-  S3-prefix, SNS and model permissions. There is no star action or global star
-  resource.
+  S3-prefix, SNS and model permissions. There is no star action. Live Stage 6.3
+  IAM simulation later established that three SNS subscription-lifecycle APIs
+  require `Resource: "*"`; that exception is isolated from topic-bound
+  `Subscribe`/`Publish` and all data permissions.
 - User pool deletion protection plus retain policies reduce accidental identity
   loss.
 - Added a complete non-secret `.env.example` for backend/container/SPA public

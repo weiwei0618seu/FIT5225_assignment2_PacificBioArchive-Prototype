@@ -108,7 +108,8 @@ class AuthIamTemplateTests(unittest.TestCase):
         assertions = self.template["Rules"]["GoogleCredentialsRequiredWhenEnabled"]
         self.assertIn("Assertions", assertions)
 
-    def test_lambda_roles_trust_only_lambda_and_have_no_star_actions_or_resources(self) -> None:
+    def test_lambda_roles_trust_only_lambda_and_bound_wildcard_resource(self) -> None:
+        global_resources: list[tuple[str, str, set[str]]] = []
         for logical_id in ("CoreApiRole", "MediaProcessorRole", "TemporaryQueryRole"):
             with self.subTest(role=logical_id):
                 role = self.resources[logical_id]["Properties"]
@@ -126,7 +127,24 @@ class AuthIamTemplateTests(unittest.TestCase):
                     actions = statement["Action"]
                     actions = [actions] if isinstance(actions, str) else actions
                     self.assertNotIn("*", actions)
-                    self.assertNotEqual(statement["Resource"], "*")
+                    if statement["Resource"] == "*":
+                        global_resources.append(
+                            (logical_id, statement.get("Sid", ""), set(actions))
+                        )
+        # These SNS lifecycle APIs do not support resource-level IAM. Subscribe
+        # and Publish remain separately restricted to NotificationTopicArn.
+        self.assertEqual(
+            global_resources,
+            [(
+                "CoreApiRole",
+                "OwnTopicSubscriptions",
+                {
+                    "sns:GetSubscriptionAttributes",
+                    "sns:SetSubscriptionAttributes",
+                    "sns:Unsubscribe",
+                },
+            )],
+        )
 
     def test_roles_separate_core_processing_and_ml_permissions(self) -> None:
         def actions(role_name: str) -> set[str]:
@@ -155,7 +173,7 @@ class AuthIamTemplateTests(unittest.TestCase):
             for statement in core_statements
             if statement.get("Sid") == "OwnTopicSubscriptions"
         )
-        self.assertEqual(subscription_access["Resource"], {"Ref": "NotificationTopicArn"})
+        self.assertEqual(subscription_access["Resource"], "*")
         self.assertEqual(
             set(subscription_access["Action"]),
             {

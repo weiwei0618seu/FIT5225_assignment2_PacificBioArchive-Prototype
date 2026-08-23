@@ -60,10 +60,13 @@ losing the HD rubric functionality.
 - Temporary query: query-image read/delete, model read, media scan and result
   media read only.
 
-No inline statement contains `Action: "*"` or `Resource: "*"`. Basic Lambda
-logging uses AWS's standard execution managed policy. SNS subscription actions
-use only the configured topic's subscription-ARN namespace because individual
-subscription UUIDs do not exist at deployment time.
+No inline statement contains `Action: "*"`. Basic Lambda logging uses AWS's
+standard execution managed policy. The sole `Resource: "*"` statement contains
+only SNS `GetSubscriptionAttributes`, `SetSubscriptionAttributes` and
+`Unsubscribe`, whose AWS IAM definitions do not support resource-level
+authorization. SNS `Subscribe` and `Publish` remain restricted to the configured
+topic ARN, and application state stores only subscriptions created for that
+topic.
 
 ## Cost/safety
 
