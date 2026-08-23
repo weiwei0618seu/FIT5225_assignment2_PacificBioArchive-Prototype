@@ -132,7 +132,8 @@ try {
         'frontend/src/pages/ManagePage.tsx',
         'infrastructure/template.yaml',
         'infrastructure/auth-and-iam.json',
-        'infrastructure/scripts/verify-live-stack.sh'
+        'infrastructure/scripts/verify-live-stack.sh',
+        'scripts/verify-live-e2e-evidence.ps1'
     )
     foreach ($relativePath in $requiredImplementation) {
         Assert-Condition (Test-Path -LiteralPath $relativePath -PathType Leaf) `
@@ -250,10 +251,9 @@ try {
         Assert-Condition ($liveAcceptance -notmatch '(?im)^FAIL:|https?://|arn:aws:|x-amz-|eyJ') `
             'live stack evidence contains a failure or a sensitive endpoint/identifier'
 
-        $liveE2e = Get-Content -LiteralPath 'docs/evidence/LIVE_E2E.json' -Raw |
-            ConvertFrom-Json
-        Assert-Condition ($liveE2e.status -eq 'PASS') `
-            'live E2E evidence is not PASS'
+        & (Join-Path $repositoryRoot 'scripts/verify-live-e2e-evidence.ps1')
+        Assert-Condition ($LASTEXITCODE -eq 0) `
+            'live E2E evidence is incomplete or contains sensitive data'
 
         $stageReport = Get-Content -LiteralPath 'docs/stages/STAGE_6.3_REPORT.md' -Raw
         Assert-Condition ($stageReport -notmatch '\*\*In progress\.\*\*|\| Pending') `

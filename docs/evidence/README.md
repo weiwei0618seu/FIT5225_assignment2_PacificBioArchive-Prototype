@@ -31,3 +31,16 @@ The two Linux JSON files above preserve its observed content after expiry.
 Live AWS evidence belongs in a separate Stage 6.3 file and must only be added
 after observing the deployed account. Never manufacture URLs, resource IDs,
 cost values, email status or CloudWatch results.
+
+`LIVE_E2E.json` is deliberately absent until the complete live workflow has
+been observed. Before it can satisfy the final gate, run:
+
+```powershell
+./scripts/verify-live-e2e-evidence.ps1
+```
+
+The file must use schema version 1, name every required check with its evidence
+source and a short sanitized note, and record the Cognito verification, SNS
+confirmation and watched-tag delivery as human observations. The validator
+rejects endpoints, AWS ARNs, tokens, credentials, signed-request fields and
+email addresses rather than attempting to redact them after they are committed.

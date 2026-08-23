@@ -83,6 +83,14 @@ PDF and the pushed final handoff branch exist, the strict completion gate is:
 ./scripts/verify-final-delivery.ps1 -RequireFinalState
 ```
 
+`scripts/verify-live-e2e-evidence.ps1` prevents a bare `status: PASS` from
+standing in for the live workflow. It requires 22 individually observed checks
+covering authentication, image/video ML, all query types, temporary-object
+cleanup on success and failure, bulk/idempotent management, notification,
+logout and log redaction. It also requires the three human email observations
+and rejects endpoints, ARNs, JWTs, signed-request fields, credentials and email
+addresses from the committed JSON.
+
 The strict gate must not be weakened to manufacture completion. Missing human
 email confirmations, member data, live AWS evidence or final artifacts remain
 explicit blockers until actually supplied or observed.

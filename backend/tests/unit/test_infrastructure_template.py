@@ -332,6 +332,7 @@ class FinalDeliveryVerificationScriptTests(unittest.TestCase):
             "stage-7.1-final-handoff",
             "LIVE_STACK_ACCEPTANCE.txt",
             "LIVE_E2E.json",
+            "verify-live-e2e-evidence.ps1",
             "Pacific_BioArchive_Team_Report_FINAL.pdf",
             "STAGE_7.1_REPORT.md",
             "STAGE_7.1_HANDOFF.md",
