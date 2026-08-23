@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: aws-actions/setup-sam@f84ec7d548307efafe33230528756de3c5841a17 # v2
+      - uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
 
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
         with:
@@ -50,6 +50,17 @@ jobs:
             --template-file infrastructure/template.yaml \
             --parallel
           test -f .aws-sam/build/template.yaml
+          tar -C .aws-sam -czf sam-python312-build.tar.gz build
+          sha256sum sam-python312-build.tar.gz > sam-python312-build.tar.gz.sha256
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: sam-python312-build-${{ github.run_id }}
+          path: |
+            sam-python312-build.tar.gz
+            sam-python312-build.tar.gz.sha256
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Build frontend with pnpm 11.19.0
         working-directory: frontend
