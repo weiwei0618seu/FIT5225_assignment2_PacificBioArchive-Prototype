@@ -1,0 +1,61 @@
+name: Verify deployment build toolchain
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [stage-6.3-aws-deployment]
+    paths:
+      - .github/workflows/verify-deployment-toolchain.yml
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: aws-actions/setup-sam@f84ec7d548307efafe33230528756de3c5841a17 # v2
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
+        with:
+          version: "11.19.0"
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22.19.0"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Pull and run official SAM Python 3.12 build image
+        shell: bash
+        run: |
+          set -euo pipefail
+          sam --version
+          test "$(pnpm --version)" = "11.19.0"
+
+          image="public.ecr.aws/sam/build-python3.12:latest-x86_64"
+          docker pull "$image"
+          docker image inspect "$image" \
+            --format='image_id={{.Id}} size_bytes={{.Size}} architecture={{.Architecture}} os={{.Os}}'
+          docker run --rm --entrypoint python "$image" -c \
+            'import platform, sys; print(platform.platform()); print(sys.version); assert sys.version_info[:2] == (3, 12)'
+
+          sam build \
+            --use-container \
+            --template-file infrastructure/template.yaml \
+            --parallel
+          test -f .aws-sam/build/template.yaml
+
+      - name: Build frontend with pnpm 11.19.0
+        working-directory: frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(pnpm --version)" = "11.19.0"
+          pnpm install --frozen-lockfile
+          pnpm run build
