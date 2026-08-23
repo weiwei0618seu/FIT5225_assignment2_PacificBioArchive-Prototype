@@ -145,6 +145,8 @@ rules:
 - [visually verified Team Report draft](docs/report/README.md) with official AWS
   architecture icons and sanitized live screenshots (member names/IDs,
   truthful contribution confirmation and final PDF export still required)
+- [final technical report](docs/stages/STAGE_7.1_REPORT.md) and
+  [four-member submission handoff](docs/stages/STAGE_7.1_HANDOFF.md)
 - per-stage reports/handoffs under `docs/stages/`
 
 Before handoff, run `./scripts/verify-final-delivery.ps1`. The stricter
@@ -152,6 +154,10 @@ Before handoff, run `./scripts/verify-final-delivery.ps1`. The stricter
 evidence, the final Team Report PDF and a clean, pushed
 `stage-7.1-final-handoff` branch; it is expected to fail until those real final
 artifacts exist.
+
+The technical handoff branch is complete. Strict final-submission mode remains
+open only because the four member identities/contributions and the resulting
+genuine final PDF are human-owned facts that have not been supplied.
 
 ## Troubleshooting
 

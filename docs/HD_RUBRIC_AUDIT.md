@@ -1,10 +1,10 @@
 # HD Rubric Audit
 
 Status legend: **PASS** = observed evidence; **READY** = implementation and
-automated evidence exist but live AWS/human confirmation is still required;
+evidence exist but a submission or rehearsal action remains human-owned;
 **OPTIONAL** = enhancement beyond the stable core.
 
-| Rubric item | Status | Evidence / remaining live gate |
+| Rubric item | Status | Evidence / remaining responsibility |
 |---|---|---|
 | 1.1 Cognito sign-up/sign-in/sign-out | PASS | Real sign-up, email verification, sign-in and sign-out pass; a direct post-logout protected-page visit returned to sign-in. |
 | 1.2 block/redirect unauthenticated | PASS | CloudFront root redirected to sign-in; all business routes use JWT and `/health` returned 401 anonymously. |
