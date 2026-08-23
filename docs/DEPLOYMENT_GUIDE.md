@@ -21,7 +21,7 @@ assessment. Do not run cleanup commands during a demo.
 
 - AWS console/CloudShell authenticated to account `835597620771`;
 - region `ap-southeast-2`;
-- AWS CLI, SAM CLI, Node.js, npm and `jq` in CloudShell;
+- AWS CLI, SAM CLI, Docker, Node.js, npm and `jq` in CloudShell;
 - repository source without `.env`, secrets or unnecessary model duplicates;
 - successful local `infrastructure/scripts/validate.ps1`;
 - immutable ECR image evidence, never a mutable tag.
@@ -29,7 +29,7 @@ assessment. Do not run cleanup commands during a demo.
 The verified Stage 6.3 image is:
 
 ```text
-835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:264e7840e9ae93cdb5e35afa30b33bdf4b9eb2965055d8f2bb8f90e8ad6e656b
+835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3
 ```
 
 ## 1. Validate locally
@@ -56,8 +56,9 @@ immutable private-repository owner/repository IDs and
 repository. No AWS access key is stored in GitHub.
 
 Run the `Publish verified ML image` workflow and record its run ID, commit,
-digest, image size, model predictions and artifact checksum. Stage 6.3 uses run
-`32597155253`, attempt 2, job `97090696246`.
+digest, image size, model predictions and artifact checksum. Stage 6.3 uses
+successful run `32601871666`, job `97101257587`, for commit
+`b42dc43c65031aa0e5b2d2175a2467f0cda60b0d`.
 
 ## 3. Deploy the core stack
 
@@ -67,11 +68,14 @@ Choose a globally unique lowercase Cognito prefix. The current Prototype uses
 ```bash
 export PBA_CONFIRM_FREE_PLAN='US$0'
 export PBA_HOSTED_UI_DOMAIN_PREFIX='pba-prototype-835597620771'
-export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:264e7840e9ae93cdb5e35afa30b33bdf4b9eb2965055d8f2bb8f90e8ad6e656b'
+export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3'
 bash infrastructure/scripts/deploy-core.sh
 ```
 
-The script validates, builds and pauses at the CloudFormation change set.
+The script validates, builds with the official Lambda Python 3.12 SAM container
+and pauses at the CloudFormation change set. This avoids incorrectly resolving
+the Python ZIP dependencies against CloudShell's Python 3.13 host runtime. The
+first invocation may pull that official build image through Docker.
 Reject it if it contains a resource outside the documented architecture.
 Academy accounts may expose only the minimum Lambda unreserved concurrency, so
 the template deliberately omits `ReservedConcurrentExecutions`; cost is bounded
@@ -134,4 +138,3 @@ core Cognito requirement is complete while rubric item 3.4 remains unclaimed.
 
 Record commands, UTC timestamps, resource IDs and sanitized responses under
 `docs/evidence/`; never invent evidence or commit JWTs/presigned URLs.
-

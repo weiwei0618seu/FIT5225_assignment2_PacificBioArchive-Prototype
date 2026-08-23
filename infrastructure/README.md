@@ -38,10 +38,14 @@ CloudFormation change set. Never upgrade the account or add paid services.
 ./infrastructure/scripts/validate.ps1
 ```
 
-Docker is required only in GitHub Actions to build and smoke the real ML image.
-The SAM deploy consumes the resulting `@sha256` ECR URI, so AWS CloudShell needs
-the AWS CLI and SAM CLI but no Docker. Stage 6.2 records the successful portable
-container proof; Stage 6.3 must separately record ECR and live Lambda evidence.
+Docker is used in GitHub Actions to build and smoke the real ML image. It is
+also required by the core deployment script: `sam build --use-container` uses
+the official Lambda Python 3.12 build image, rather than CloudShell's host
+Python 3.13, for the ZIP-based API and authorizer functions. The SAM deploy
+still consumes the prebuilt ML `@sha256` ECR URI and does not rebuild that large
+image in CloudShell. Stage 6.2 records the successful portable ML container
+proof; Stage 6.3 must separately record the SAM build, ECR and live Lambda
+evidence.
 
 ## Deployment sequence
 
@@ -58,7 +62,9 @@ container proof; Stage 6.3 must separately record ECR and live Lambda evidence.
 5. In CloudShell, set `PBA_HOSTED_UI_DOMAIN_PREFIX`, `PBA_ML_IMAGE_URI` and
    `PBA_CONFIRM_FREE_PLAN='US$0'`, then run
    `bash infrastructure/scripts/deploy-core.sh`. Review the printed
-   CloudFormation change set before answering its confirmation prompt.
+   CloudFormation change set before answering its confirmation prompt. The
+   first build may pull the official SAM Python 3.12 build image through the
+   available Docker runtime.
    Windows operators can instead use `deploy-core.ps1` with the same digest.
 6. Deploy the SPA from CloudShell with
    `PBA_CONFIRM_FREE_PLAN='US$0' bash infrastructure/scripts/deploy-frontend.sh`,

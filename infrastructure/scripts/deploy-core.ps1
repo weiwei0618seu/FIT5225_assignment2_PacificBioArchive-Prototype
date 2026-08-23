@@ -13,7 +13,7 @@ $repositoryRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 if (-not $ConfirmDeploy) {
     throw 'Deployment is disabled by default. Re-run with -ConfirmDeploy only after checking AWS Billing/Free Plan is US$0 and the CloudFormation change set contains no paid services.'
 }
-foreach ($command in @('aws', 'sam')) {
+foreach ($command in @('aws', 'sam', 'docker')) {
     if (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
         throw "$command is required for this deployment path."
     }
@@ -35,7 +35,9 @@ Write-Host "ML image: $MlImageUri"
 
 Push-Location $repositoryRoot
 try {
-    sam build --template-file infrastructure/template.yaml --parallel
+    # Use the Lambda Python 3.12 build image instead of depending on the host's
+    # Python version. This is also the deployment path used in CloudShell.
+    sam build --use-container --template-file infrastructure/template.yaml --parallel
     if ($LASTEXITCODE -ne 0) { throw 'SAM build failed.' }
     sam deploy `
         --stack-name $StackName `

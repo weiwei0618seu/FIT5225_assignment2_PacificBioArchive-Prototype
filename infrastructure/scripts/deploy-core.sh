@@ -11,7 +11,7 @@ if [[ "${PBA_CONFIRM_FREE_PLAN:-}" != 'US$0' ]]; then
 fi
 : "${PBA_HOSTED_UI_DOMAIN_PREFIX:?Set a globally unique Cognito domain prefix}"
 : "${PBA_ML_IMAGE_URI:?Set the immutable ECR image URI from publish evidence}"
-for command_name in aws sam; do
+for command_name in aws sam docker; do
   command -v "$command_name" >/dev/null
 done
 
@@ -23,7 +23,10 @@ image_repository="${PBA_ML_IMAGE_URI%@*}"
 
 cd "$repository_root"
 sam validate --lint --template-file infrastructure/template.yaml --region "$region"
-sam build --template-file infrastructure/template.yaml --parallel
+# CloudShell currently provides Python 3.13 while the Lambda ZIP functions use
+# Python 3.12. The official SAM build container supplies the matching runtime
+# and keeps dependency resolution reproducible across deployment hosts.
+sam build --use-container --template-file infrastructure/template.yaml --parallel
 sam deploy \
   --stack-name "$stack_name" \
   --region "$region" \

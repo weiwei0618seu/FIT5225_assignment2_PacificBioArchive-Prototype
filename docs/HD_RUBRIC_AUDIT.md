@@ -34,7 +34,9 @@ automated evidence exist but live AWS/human confirmation is still required;
 - frontend: 20 passed; TypeScript, Vitest, build and ESLint pass;
 - CloudFormation: cfn-lint pass; infrastructure security assertions pass;
 - real supplied model: three expected fixtures pass locally and in Linux;
-- immutable ECR publish: workflow run `32597155253`, attempt 2, successful;
+- immutable ECR publish: workflow run `32601871666`, job `97101257587`,
+  immutable digest `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`,
+  successful;
 - live root stack/UI/E2E: pending completion and honest Stage 6.3 evidence.
 
 The project should not be called finally complete while any READY item required

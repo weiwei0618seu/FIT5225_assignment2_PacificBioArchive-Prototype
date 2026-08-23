@@ -13,9 +13,10 @@ The deployment remains restricted to the Prototype repository and
 ## Observed work completed so far
 
 - Published the real ML container through GitHub OIDC without long-lived AWS
-  credentials. Workflow run `32597155253`, attempt 2, succeeded.
+  credentials. Workflow run `32601871666`, job `97101257587`, succeeded for
+  commit `b42dc43c65031aa0e5b2d2175a2467f0cda60b0d`.
 - Bound both ML Lambdas to immutable ECR digest
-  `sha256:264e7840e9ae93cdb5e35afa30b33bdf4b9eb2965055d8f2bb8f90e8ad6e656b`.
+  `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`.
 - Restricted OIDC trust to the private repository's immutable owner/repository
   IDs, the Stage 6.3 branch and `sts.amazonaws.com` audience.
 - Observed and retained two honest failed root-stack deployments:
@@ -26,6 +27,10 @@ The deployment remains restricted to the Prototype repository and
 - Fixed those quota incompatibilities by using 3008 MB for ML functions and
   omitting reserved concurrency from all three functions. Local template and
   regression gates pass after both changes.
+- Kept the Lambda ZIP runtime at Python 3.12 and changed both deployment paths
+  to fail closed without Docker and use `sam build --use-container`. This
+  supplies the matching official build runtime even though the current
+  CloudShell host provides Python 3.13.
 - Added `infrastructure/scripts/verify-live-stack.sh`, a read-only acceptance
   gate that suppresses raw AWS responses and checks:
   - root stack `CREATE_COMPLETE`;
@@ -98,11 +103,12 @@ signed-in AWS account.
 - Evidence must contain no JWT, AWS credentials, email code, OAuth secret,
   pre-signed URL or private user data.
 
-## Current blocker
+## Current controlled action
 
-The AWS console session expired and requires the user to complete IAM sign-in
-and any MFA in the explicitly selected Chrome browser. This is a required human
-account action under the project instructions, not a deployment or code claim.
+The user restored the authenticated AWS console session. Before the next retry,
+the operator must explicitly confirm deletion of the `ROLLBACK_COMPLETE` stack
+record and the first pull/run of the official SAM build container. These are
+separate controlled actions; neither has yet been recorded as complete.
 
 ## Completion criteria
 

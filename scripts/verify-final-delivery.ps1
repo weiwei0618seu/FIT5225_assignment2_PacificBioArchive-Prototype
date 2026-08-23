@@ -140,6 +140,25 @@ try {
     }
     Write-Pass 'Every core assignment capability has an implementation surface'
 
+    $bashCoreDeploy = Get-Content -LiteralPath `
+        'infrastructure/scripts/deploy-core.sh' -Raw
+    Assert-Condition ($bashCoreDeploy -match `
+        'for\s+command_name\s+in\s+aws\s+sam\s+docker;\s+do') `
+        'the CloudShell deployment path does not fail closed when Docker is unavailable'
+    Assert-Condition ($bashCoreDeploy -match `
+        'sam\s+build\s+--use-container\b') `
+        'the CloudShell deployment path does not use the Lambda-matched SAM build container'
+
+    $windowsCoreDeploy = Get-Content -LiteralPath `
+        'infrastructure/scripts/deploy-core.ps1' -Raw
+    Assert-Condition ($windowsCoreDeploy -match `
+        'foreach\s*\(\s*\$command\s+in\s+@\(''aws'',\s*''sam'',\s*''docker''\)\s*\)') `
+        'the Windows deployment path does not fail closed when Docker is unavailable'
+    Assert-Condition ($windowsCoreDeploy -match `
+        'sam\s+build\s+--use-container\b') `
+        'the Windows deployment path does not use the Lambda-matched SAM build container'
+    Write-Pass 'Deployment scripts require Docker and use a Python 3.12 SAM build container'
+
     $trackedFiles = @(Invoke-Git -GitArguments @('ls-files'))
     $forbiddenTracked = @($trackedFiles | Where-Object {
         (($_ -match '(^|/)\.env($|\.)') -and $_ -ne '.env.example') -or
