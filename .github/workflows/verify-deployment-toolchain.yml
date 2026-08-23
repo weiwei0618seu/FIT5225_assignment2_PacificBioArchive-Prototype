@@ -6,6 +6,9 @@ on:
     branches: [stage-6.3-aws-deployment]
     paths:
       - .github/workflows/verify-deployment-toolchain.yml
+      - backend/src/**
+      - infrastructure/template.yaml
+      - infrastructure/auth-and-iam.json
 
 permissions:
   contents: read
