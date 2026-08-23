@@ -163,7 +163,7 @@
               {"Sid": "NotificationEvents", "Effect": "Allow", "Action": ["dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "NotificationEventsTableArn"}},
               {"Sid": "PrivateMediaObjects", "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], "Resource": [{"Fn::Sub": "${MediaBucketArn}/originals/*"}, {"Fn::Sub": "${MediaBucketArn}/thumbnails/*"}, {"Fn::Sub": "${MediaBucketArn}/query-temp/*"}]},
               {"Sid": "NotificationTopic", "Effect": "Allow", "Action": ["sns:Subscribe", "sns:Publish"], "Resource": {"Ref": "NotificationTopicArn"}},
-              {"Sid": "OwnTopicSubscriptions", "Effect": "Allow", "Action": ["sns:GetSubscriptionAttributes", "sns:SetSubscriptionAttributes", "sns:Unsubscribe"], "Resource": {"Fn::Sub": "${NotificationTopicArn}:*"}}
+              {"Sid": "OwnTopicSubscriptions", "Effect": "Allow", "Action": ["sns:GetSubscriptionAttributes", "sns:SetSubscriptionAttributes", "sns:Unsubscribe"], "Resource": {"Ref": "NotificationTopicArn"}}
             ]
           }
         }],

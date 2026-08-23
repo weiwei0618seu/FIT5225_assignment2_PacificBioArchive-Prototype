@@ -147,6 +147,23 @@ class AuthIamTemplateTests(unittest.TestCase):
         processor = actions("MediaProcessorRole")
         temporary = actions("TemporaryQueryRole")
         self.assertIn("sns:Subscribe", core)
+        core_statements = self.resources["CoreApiRole"]["Properties"]["Policies"][0][
+            "PolicyDocument"
+        ]["Statement"]
+        subscription_access = next(
+            statement
+            for statement in core_statements
+            if statement.get("Sid") == "OwnTopicSubscriptions"
+        )
+        self.assertEqual(subscription_access["Resource"], {"Ref": "NotificationTopicArn"})
+        self.assertEqual(
+            set(subscription_access["Action"]),
+            {
+                "sns:GetSubscriptionAttributes",
+                "sns:SetSubscriptionAttributes",
+                "sns:Unsubscribe",
+            },
+        )
         self.assertNotIn("sns:Subscribe", processor)
         self.assertIn("sns:Publish", processor)
         self.assertNotIn("sns:Publish", temporary)
