@@ -57,9 +57,19 @@ export type TemporaryQueryTicket = {
 };
 
 export type TemporaryQueryResponse = QueryResponse & {
+  query_id: string;
+  processing_status: "READY";
   detected_species_counts: Record<string, number>;
   model_version: string | null;
 };
+
+export type TemporaryQueryPending = {
+  query_id: string;
+  processing_status: "AWAITING_UPLOAD" | "PROCESSING";
+  retry_after_seconds: number;
+};
+
+export type TemporaryQueryStatusResponse = TemporaryQueryPending | TemporaryQueryResponse;
 
 export type TagEditResponse = {
   operation: 0 | 1;

@@ -6,6 +6,9 @@ Observed on 2026-08-23 against the Sydney CloudFront deployment.
   any user data was entered.
 - `01-login-protected.png` shows the native sign-in page after disabled Google
   federation was hidden.
+- `02-upload-ml-thumbnail.png` shows the supplied-model `READY` result for the
+  real fixture, including the generated thumbnail, species count and model
+  version. The signed URL itself is not displayed.
 
-Both screenshots contain empty fields and no credentials, email addresses,
-tokens, codes, pre-signed URLs or private media.
+The screenshots contain no credentials, email addresses, tokens, codes,
+pre-signed URLs or private media identifiers.

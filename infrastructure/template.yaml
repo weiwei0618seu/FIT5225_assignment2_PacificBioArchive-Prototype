@@ -73,6 +73,7 @@ Globals:
         PBA_MEDIA_BUCKET: !Ref MediaBucket
         PBA_MEDIA_TABLE: !Ref MediaTable
         PBA_DEDUP_TABLE: !Ref DedupTable
+        PBA_TEMP_QUERIES_TABLE: !Ref TemporaryQueriesTable
         PBA_SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
         PBA_NOTIFICATION_EVENTS_TABLE: !Ref NotificationEventsTable
         PBA_NOTIFICATION_TOPIC_ARN: !Ref NotificationTopic
@@ -343,6 +344,28 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  TemporaryQueriesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: query_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: query_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+        SSEType: KMS
+      Tags:
+        - Key: Project
+          Value: PacificBioArchive
+        - Key: Environment
+          Value: !Ref Environment
+
   SubscriptionsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -414,9 +437,11 @@ Resources:
         ModelBucketArn: !GetAtt ModelBucket.Arn
         MediaTableArn: !GetAtt MediaTable.Arn
         DedupTableArn: !GetAtt DedupTable.Arn
+        TemporaryQueriesTableArn: !GetAtt TemporaryQueriesTable.Arn
         SubscriptionsTableArn: !GetAtt SubscriptionsTable.Arn
         NotificationEventsTableArn: !GetAtt NotificationEventsTable.Arn
         NotificationTopicArn: !Ref NotificationTopic
+        TemporaryQueryFunctionArn: !Sub 'arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:pba-${Environment}-temporary-query'
       Tags:
         Project: PacificBioArchive
         Environment: !Ref Environment
@@ -483,6 +508,12 @@ Resources:
         TempQueryInit:
           Type: HttpApi
           Properties: {ApiId: !Ref HttpApi, Path: /queries/file/init, Method: POST}
+        TempQueryStatusPost:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: '/queries/file/{query_id}', Method: POST}
+        TempQueryStatusGet:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Path: '/queries/file/{query_id}', Method: GET}
         EditTags:
           Type: HttpApi
           Properties: {ApiId: !Ref HttpApi, Path: /media/tags, Method: POST}
@@ -527,10 +558,23 @@ Resources:
         Size: 1024
       ImageConfig:
         Command: [pacific_bioarchive.handlers.temp_query.lambda_handler]
-      Events:
-        ExecuteTempQuery:
-          Type: HttpApi
-          Properties: {ApiId: !Ref HttpApi, Path: '/queries/file/{query_id}', Method: POST}
+
+  TemporaryQueryOrchestratorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'pba-${Environment}-temporary-query-orchestrator'
+      PackageType: Zip
+      Runtime: python3.12
+      CodeUri: ../backend/src/
+      Handler: pacific_bioarchive.handlers.query_orchestrator.lambda_handler
+      Role: !GetAtt AuthAndIam.Outputs.TemporaryQueryOrchestratorRoleArn
+      MemorySize: 256
+      Timeout: 330
+      Environment:
+        Variables:
+          PBA_TEMP_QUERY_FUNCTION: !Ref TemporaryQueryFunction
+    Metadata:
+      BuildMethod: python3.12
   OriginalObjectRule:
     Type: AWS::Events::Rule
     Properties:
@@ -565,6 +609,40 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn: !GetAtt OriginalObjectRule.Arn
 
+  TemporaryQueryObjectRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: Route ephemeral query uploads to asynchronous ML orchestration
+      EventPattern:
+        source: [aws.s3]
+        detail-type: [Object Created]
+        detail:
+          bucket:
+            name: [!Ref MediaBucket]
+          object:
+            key:
+              - prefix: query-temp/
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt TemporaryQueryOrchestratorFunction.Arn
+          Id: TemporaryQueryOrchestrator
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 3600
+            MaximumRetryAttempts: 2
+          InputTransformer:
+            InputPathsMap:
+              bucket: '$.detail.bucket.name'
+              key: '$.detail.object.key'
+            InputTemplate: '{"Records":[{"eventSource":"aws:s3","eventName":"ObjectCreated:Put","s3":{"bucket":{"name":<bucket>},"object":{"key":<key>}}}]}'
+
+  AllowEventBridgeInvokeTemporaryQueryOrchestrator:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TemporaryQueryOrchestratorFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt TemporaryQueryObjectRule.Arn
+
   CoreApiLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -581,6 +659,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${TemporaryQueryFunction}'
+      RetentionInDays: 7
+
+  TemporaryQueryOrchestratorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${TemporaryQueryOrchestratorFunction}'
       RetentionInDays: 7
 
   ApiErrorAlarm:
@@ -609,6 +693,23 @@ Resources:
       Dimensions:
         - Name: FunctionName
           Value: !Ref MediaProcessorFunction
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      DatapointsToAlarm: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  TemporaryQueryOrchestratorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Pacific BioArchive temporary query orchestration errors
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref TemporaryQueryOrchestratorFunction
       Statistic: Sum
       Period: 300
       EvaluationPeriods: 1

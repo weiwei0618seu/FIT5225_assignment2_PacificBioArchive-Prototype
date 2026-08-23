@@ -32,8 +32,10 @@ Open **Search** and choose one of four modes:
 - **Species** — find ready files with at least one automatic or manual tag.
 - **Thumbnail** — paste a returned thumbnail URL/key to recover the original.
 - **Image** — temporarily upload JPG/PNG/WebP. The model detects its tags and
-  finds existing matches; the query object is deleted on success or failure and
-  is never added to the archive.
+  finds existing matches. The browser polls the owner-scoped background job, so
+  a cold supplied model may take over two minutes without producing an HTTP
+  timeout. The query object is deleted on success or failure and is never added
+  to the archive.
 
 Search results use thumbnails to save bandwidth. Select **Open original** only
 when the full-size file is needed. Empty results and invalid input are shown as
@@ -76,4 +78,3 @@ watched tags.
 | No ready media matched | Query is valid but no record meets every condition. |
 | Subscription pending | Confirm the AWS SNS email, then reload Manage. |
 | Deletion incomplete | Keep the outcome list/request ID and retry; check CloudWatch if it repeats. |
-

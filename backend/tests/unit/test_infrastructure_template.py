@@ -75,13 +75,23 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         self.assertEqual(query_rule["ExpirationInDays"], 1)
 
     def test_on_demand_encrypted_tables_and_dedup_ttl(self) -> None:
-        for name in ("MediaTable", "DedupTable", "SubscriptionsTable", "NotificationEventsTable"):
+        for name in (
+            "MediaTable",
+            "DedupTable",
+            "TemporaryQueriesTable",
+            "SubscriptionsTable",
+            "NotificationEventsTable",
+        ):
             with self.subTest(table=name):
                 properties = self.resources[name]["Properties"]
                 self.assertEqual(properties["BillingMode"], "PAY_PER_REQUEST")
                 self.assertTrue(properties["SSESpecification"]["SSEEnabled"])
         ttl = self.resources["DedupTable"]["Properties"]["TimeToLiveSpecification"]
         self.assertEqual(ttl, {"AttributeName": "expires_at", "Enabled": True})
+        query_ttl = self.resources["TemporaryQueriesTable"]["Properties"][
+            "TimeToLiveSpecification"
+        ]
+        self.assertEqual(query_ttl, {"AttributeName": "expires_at", "Enabled": True})
 
     def test_all_business_routes_use_one_jwt_authorized_http_api(self) -> None:
         api = self.resources["HttpApi"]["Properties"]
@@ -103,6 +113,7 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
             ("POST", "/queries/thumbnail"),
             ("POST", "/queries/file/init"),
             ("POST", "/queries/file/{query_id}"),
+            ("GET", "/queries/file/{query_id}"),
             ("POST", "/media/tags"),
             ("POST", "/media/delete"),
             ("POST", "/notifications/subscription"),
@@ -122,7 +133,16 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
             "ReservedConcurrentExecutions",
             self.resources["CoreApiFunction"]["Properties"],
         )
-        for name in ("CoreApiLogGroup", "MediaProcessorLogGroup", "TemporaryQueryLogGroup"):
+        orchestrator = self.resources["TemporaryQueryOrchestratorFunction"]["Properties"]
+        self.assertEqual(orchestrator["PackageType"], "Zip")
+        self.assertLessEqual(orchestrator["MemorySize"], 512)
+        self.assertLessEqual(orchestrator["Timeout"], 330)
+        for name in (
+            "CoreApiLogGroup",
+            "MediaProcessorLogGroup",
+            "TemporaryQueryLogGroup",
+            "TemporaryQueryOrchestratorLogGroup",
+        ):
             self.assertEqual(self.resources[name]["Properties"]["RetentionInDays"], 7)
 
     def test_core_api_sam_context_contains_importable_handler_and_dependencies(self) -> None:
@@ -137,6 +157,24 @@ class RootInfrastructureTemplateTests(unittest.TestCase):
         self.assertEqual(
             requirements.splitlines(), ["Pillow==12.0.0", "boto3==1.40.0"]
         )
+        orchestrator = self.resources["TemporaryQueryOrchestratorFunction"]["Properties"]
+        self.assertEqual(orchestrator["CodeUri"], "../backend/src/")
+        self.assertEqual(
+            orchestrator["Handler"],
+            "pacific_bioarchive.handlers.query_orchestrator.lambda_handler",
+        )
+
+    def test_temporary_query_uploads_use_eventbridge_not_sync_http_ml(self) -> None:
+        temporary = self.resources["TemporaryQueryFunction"]["Properties"]
+        self.assertNotIn("Events", temporary)
+        rule = self.resources["TemporaryQueryObjectRule"]["Properties"]
+        key_patterns = rule["EventPattern"]["detail"]["object"]["key"]
+        self.assertEqual(key_patterns, [{"prefix": "query-temp/"}])
+        target = rule["Targets"][0]
+        self.assertEqual(
+            target["Arn"], {"GetAtt": "TemporaryQueryOrchestratorFunction.Arn"}
+        )
+        self.assertEqual(target["RetryPolicy"]["MaximumRetryAttempts"], 2)
 
     def test_ml_functions_require_one_immutable_sydney_ecr_digest(self) -> None:
         pattern = self.template["Parameters"]["MlImageUri"]["AllowedPattern"]

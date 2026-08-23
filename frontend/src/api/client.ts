@@ -8,6 +8,7 @@ import type {
   SubscriptionLookup,
   TagEditResponse,
   TemporaryQueryResponse,
+  TemporaryQueryStatusResponse,
   TemporaryQueryTicket,
   ThumbnailLookup,
   UploadTicket,
@@ -105,11 +106,40 @@ export function initiateTemporaryQuery(file: File, checksum: string): Promise<Te
   });
 }
 
-export function executeTemporaryQuery(ticket: TemporaryQueryTicket): Promise<TemporaryQueryResponse> {
-  return apiRequest<TemporaryQueryResponse>(`/queries/file/${encodeURIComponent(ticket.query_id)}`, {
-    method: "POST",
-    body: JSON.stringify({ temp_key: ticket.temp_key }),
-  });
+function temporaryQueryStatus(
+  ticket: TemporaryQueryTicket,
+  method: "GET" | "POST",
+): Promise<TemporaryQueryStatusResponse> {
+  return apiRequest<TemporaryQueryStatusResponse>(
+    `/queries/file/${encodeURIComponent(ticket.query_id)}`,
+    {
+      method,
+    },
+  );
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+export async function executeTemporaryQuery(
+  ticket: TemporaryQueryTicket,
+): Promise<TemporaryQueryResponse> {
+  const deadline = Date.now() + 8 * 60 * 1000;
+  let status = await temporaryQueryStatus(ticket, "POST");
+  while (status.processing_status !== "READY") {
+    if (Date.now() >= deadline) {
+      throw new ApiError(
+        "Temporary image analysis took too long. Please try again.",
+        "TEMP_QUERY_TIMEOUT",
+        408,
+      );
+    }
+    const retrySeconds = Math.min(10, Math.max(1, status.retry_after_seconds || 3));
+    await wait(retrySeconds * 1000);
+    status = await temporaryQueryStatus(ticket, "GET");
+  }
+  return status;
 }
 
 type MediaIdentifiers = { fileIds?: string[]; urls?: string[] };

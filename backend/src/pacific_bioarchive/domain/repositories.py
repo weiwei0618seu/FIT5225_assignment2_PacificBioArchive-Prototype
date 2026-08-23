@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from .media import MediaRecord
+from .query_jobs import TemporaryQueryJob
 
 
 class DuplicateFileError(RuntimeError):
@@ -55,3 +56,11 @@ class DedupRepository(Protocol):
     def release(self, checksum: str, *, file_id: str) -> None: ...
 
     def remove(self, checksum: str, *, file_id: str) -> None: ...
+
+
+class TemporaryQueryRepository(Protocol):
+    def create(self, job: TemporaryQueryJob) -> None: ...
+
+    def get(self, query_id: str) -> TemporaryQueryJob | None: ...
+
+    def save(self, job: TemporaryQueryJob, *, expected_version: int) -> None: ...

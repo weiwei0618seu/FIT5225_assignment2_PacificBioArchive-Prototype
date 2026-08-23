@@ -51,9 +51,11 @@
     "ModelBucketArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:s3:::[A-Za-z0-9.-]+$"},
     "MediaTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
     "DedupTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
+    "TemporaryQueriesTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
     "SubscriptionsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
     "NotificationEventsTableArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:dynamodb:[^:]+:[0-9]+:table/.+$"},
-    "NotificationTopicArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:sns:[^:]+:[0-9]+:.+$"}
+    "NotificationTopicArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:sns:[^:]+:[0-9]+:.+$"},
+    "TemporaryQueryFunctionArn": {"Type": "String", "AllowedPattern": "^arn:[^:]+:lambda:[^:]+:[0-9]+:function:.+$"}
   },
   "Conditions": {
     "GoogleFederationEnabled": {"Fn::Equals": [{"Ref": "EnableGoogleFederation"}, "true"]}
@@ -159,6 +161,7 @@
             "Statement": [
               {"Sid": "MediaMetadata", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem", "dynamodb:Scan"], "Resource": {"Ref": "MediaTableArn"}},
               {"Sid": "DedupState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "DedupTableArn"}},
+              {"Sid": "TemporaryQueryState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": {"Ref": "TemporaryQueriesTableArn"}},
               {"Sid": "SubscriptionState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "SubscriptionsTableArn"}},
               {"Sid": "NotificationEvents", "Effect": "Allow", "Action": ["dynamodb:PutItem", "dynamodb:DeleteItem"], "Resource": {"Ref": "NotificationEventsTableArn"}},
               {"Sid": "PrivateMediaObjects", "Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"], "Resource": [{"Fn::Sub": "${MediaBucketArn}/originals/*"}, {"Fn::Sub": "${MediaBucketArn}/thumbnails/*"}, {"Fn::Sub": "${MediaBucketArn}/query-temp/*"}]},
@@ -218,6 +221,27 @@
         }],
         "Tags": [{"Key": "Project", "Value": "PacificBioArchive"}, {"Key": "Environment", "Value": {"Ref": "Environment"}}]
       }
+    },
+    "TemporaryQueryOrchestratorRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+        },
+        "ManagedPolicyArns": [{"Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"}],
+        "Policies": [{
+          "PolicyName": "PacificBioArchiveTemporaryQueryOrchestrator",
+          "PolicyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+              {"Sid": "TemporaryQueryState", "Effect": "Allow", "Action": ["dynamodb:GetItem", "dynamodb:PutItem"], "Resource": {"Ref": "TemporaryQueriesTableArn"}},
+              {"Sid": "InvokeTemporaryQueryMl", "Effect": "Allow", "Action": ["lambda:InvokeFunction"], "Resource": {"Ref": "TemporaryQueryFunctionArn"}}
+            ]
+          }
+        }],
+        "Tags": [{"Key": "Project", "Value": "PacificBioArchive"}, {"Key": "Environment", "Value": {"Ref": "Environment"}}]
+      }
     }
   },
   "Outputs": {
@@ -227,6 +251,7 @@
     "HostedUiBaseUrl": {"Value": {"Fn::Sub": "https://${HostedUiDomainPrefix}.auth.${AWS::Region}.amazoncognito.com"}},
     "CoreApiRoleArn": {"Value": {"Fn::GetAtt": ["CoreApiRole", "Arn"]}},
     "MediaProcessorRoleArn": {"Value": {"Fn::GetAtt": ["MediaProcessorRole", "Arn"]}},
-    "TemporaryQueryRoleArn": {"Value": {"Fn::GetAtt": ["TemporaryQueryRole", "Arn"]}}
+    "TemporaryQueryRoleArn": {"Value": {"Fn::GetAtt": ["TemporaryQueryRole", "Arn"]}},
+    "TemporaryQueryOrchestratorRoleArn": {"Value": {"Fn::GetAtt": ["TemporaryQueryOrchestratorRole", "Arn"]}}
   }
 }

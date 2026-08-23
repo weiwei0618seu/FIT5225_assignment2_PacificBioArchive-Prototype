@@ -96,7 +96,8 @@ fi
 for function_spec in \
   'CoreApiFunction:512:Zip' \
   'MediaProcessorFunction:3008:Image' \
-  'TemporaryQueryFunction:3008:Image'; do
+  'TemporaryQueryFunction:3008:Image' \
+  'TemporaryQueryOrchestratorFunction:256:Zip'; do
   IFS=: read -r logical_id expected_memory expected_package <<<"$function_spec"
   function_name="$(physical_id "$logical_id")"
   function_data="$(aws_json lambda get-function --function-name "$function_name")"
@@ -157,7 +158,7 @@ for bucket_logical_id in MediaBucket ModelBucket FrontendBucket; do
 done
 pass "All S3 buckets block public access, encrypt at rest and require TLS"
 
-for table_logical_id in MediaTable DedupTable SubscriptionsTable NotificationEventsTable; do
+for table_logical_id in MediaTable DedupTable TemporaryQueriesTable SubscriptionsTable NotificationEventsTable; do
   table_name="$(physical_id "$table_logical_id")"
   table_data="$(aws_json dynamodb describe-table --table-name "$table_name")"
   if ! jq -e '.Table.TableStatus == "ACTIVE" and
@@ -179,6 +180,7 @@ expected_routes='[
   "POST /queries/thumbnail",
   "POST /queries/file/init",
   "POST /queries/file/{query_id}",
+  "GET /queries/file/{query_id}",
   "POST /media/tags",
   "POST /media/delete",
   "POST /notifications/subscription",
@@ -216,7 +218,7 @@ if ! jq -e '.Distribution.Status == "Deployed" and
 fi
 pass "CloudFront is enabled and deployed"
 
-for log_group_logical_id in CoreApiLogGroup MediaProcessorLogGroup TemporaryQueryLogGroup; do
+for log_group_logical_id in CoreApiLogGroup MediaProcessorLogGroup TemporaryQueryLogGroup TemporaryQueryOrchestratorLogGroup; do
   log_group_name="$(physical_id "$log_group_logical_id")"
   log_groups="$(aws_json logs describe-log-groups --log-group-name-prefix "$log_group_name")"
   if ! jq -e --arg exact "$log_group_name" '

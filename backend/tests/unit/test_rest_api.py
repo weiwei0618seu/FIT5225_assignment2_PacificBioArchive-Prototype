@@ -29,6 +29,7 @@ from pacific_bioarchive.persistence.notifications import (
     InMemoryNotificationEventRepository,
     InMemorySubscriptionRepository,
 )
+from pacific_bioarchive.persistence.query_jobs import InMemoryTemporaryQueryRepository
 from PIL import Image
 
 BUCKET = "private-media-bucket"
@@ -152,6 +153,7 @@ class RestApiTests(unittest.TestCase):
         self.media = InMemoryMediaRepository()
         self.dedup = InMemoryDedupRepository(epoch_seconds=lambda: 100)
         self.storage = FakeStorage()
+        self.temp_jobs = InMemoryTemporaryQueryRepository()
         record = ready_record()
         self.media.create(record)
         self.dedup.reserve(
@@ -200,6 +202,7 @@ class RestApiTests(unittest.TestCase):
             ),
             notifications=notifications,
             temp_queries=core_temp_service,
+            temp_query_jobs=self.temp_jobs,
         )
         self.app = CoreApiApplication(services, version="test-version")
 
@@ -321,6 +324,59 @@ class RestApiTests(unittest.TestCase):
         self.assertEqual(payload["detected_species_counts"], {"dingo": 1})
         self.assertEqual(payload["media"][0]["file_id"], "ready-1")
         self.assertNotIn(ticket["temp_key"], self.storage.objects)
+
+    def test_temp_query_status_is_owner_scoped_and_returns_fresh_media_urls(self) -> None:
+        data = image_bytes()
+        created = self.app.handle(
+            self.event(
+                "POST",
+                "/queries/file/init",
+                body={
+                    "filename": "query.jpg",
+                    "content_type": "image/jpeg",
+                    "size_bytes": len(data),
+                    "checksum": sha256_bytes(data),
+                },
+            )
+        )
+        ticket = self.payload(created)
+        pending = self.app.handle(
+            self.event("POST", f"/queries/file/{ticket['query_id']}")
+        )
+        self.assertEqual(pending["statusCode"], 202)
+        self.assertEqual(self.payload(pending)["processing_status"], "AWAITING_UPLOAD")
+
+        job = self.temp_jobs.get(ticket["query_id"])
+        assert job is not None
+        processing = job.mark_processing(now="later")
+        self.temp_jobs.save(processing, expected_version=job.version)
+        ready = processing.mark_ready(
+            species_counts={"dingo": 1},
+            model_version="test-v1",
+            matched_file_ids=("ready-1",),
+            total=1,
+            truncated=False,
+            now="later-still",
+        )
+        self.temp_jobs.save(ready, expected_version=processing.version)
+
+        complete = self.app.handle(
+            self.event("GET", f"/queries/file/{ticket['query_id']}")
+        )
+        payload = self.payload(complete)
+        self.assertEqual(complete["statusCode"], 200)
+        self.assertEqual(payload["processing_status"], "READY")
+        self.assertEqual(payload["detected_species_counts"], {"dingo": 1})
+        self.assertIn("originals/ready-1", payload["media"][0]["original_url"])
+
+        hidden = self.app.handle(
+            self.event(
+                "GET",
+                f"/queries/file/{ticket['query_id']}",
+                claims=self.claims(sub="other-user"),
+            )
+        )
+        self.assert_error(hidden, 404, "TEMP_QUERY_NOT_FOUND")
 
     def test_temp_query_checksum_failure_still_deletes_object(self) -> None:
         data = image_bytes()

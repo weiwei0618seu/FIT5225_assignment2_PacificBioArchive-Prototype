@@ -63,7 +63,7 @@ describe("query UI", () => {
 
   it("runs a temporary image query and displays detected counts", async () => {
     const user = userEvent.setup();
-    vi.mocked(temporary.runTemporaryQuery).mockResolvedValue({ media: [media], total: 1, truncated: false, detected_species_counts: { dingo: 1 }, model_version: "supplied-v1" });
+    vi.mocked(temporary.runTemporaryQuery).mockResolvedValue({ query_id: "query-1", processing_status: "READY", media: [media], total: 1, truncated: false, detected_species_counts: { dingo: 1 }, model_version: "supplied-v1" });
     render(<SearchPage />);
     await user.click(screen.getByRole("tab", { name: /image visual query/i }));
     const file = new File(["query"], "query.jpg", { type: "image/jpeg" });

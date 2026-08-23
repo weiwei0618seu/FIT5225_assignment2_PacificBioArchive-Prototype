@@ -14,7 +14,10 @@ flowchart LR
   P --> S
   P --> D
   P --> N[SNS watched-tag topic]
-  A --> Q[Temporary Query Lambda container]
+  S -->|EventBridge query-temp/| O[Temporary Query Orchestrator Lambda]
+  O -->|synchronous service-to-service invoke| Q[Temporary Query ML Lambda container]
+  O --> J[(DynamoDB temporary-query jobs + TTL)]
+  L --> J
   Q --> M
   Q --> S
   Q --> D
@@ -77,6 +80,8 @@ durable identifier.
   the versioned model bucket remains an auditable deployment archive;
 - model version, paths, thresholds, and class-map path are environment values;
 - processes load each model once per warm Lambda execution environment;
+- temporary queries run behind an asynchronous S3/EventBridge orchestrator so
+  cold-start/model inference can exceed API Gateway's synchronous wait limit;
 - image counts equal accepted animal detections after classification;
 - video counts use the maximum simultaneous accepted count for each species
   across exact 1-second samples, avoiding artificial count inflation when one
@@ -89,7 +94,8 @@ durable identifier.
   Lambda work is bounded by upload/video limits and timeouts, and CloudWatch
   logs expire after seven days; reserved concurrency is omitted for compatibility
   with AWS Academy's minimum unreserved-concurrency requirement;
-- query-temp objects expire after one day and incomplete multipart uploads abort;
+- query-temp objects expire after one day, temporary job rows expire after one
+  hour, and incomplete multipart uploads abort;
 - no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF is present;
 - the root stack can bootstrap native Cognito without secrets; Google is enabled
   only by a later NoEcho stack update once exact CloudFront/Cognito redirects and

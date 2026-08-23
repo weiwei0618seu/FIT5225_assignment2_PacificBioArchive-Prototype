@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as auth from "../auth/authClient";
-import { ApiError, apiRequest } from "./client";
+import { ApiError, apiRequest, executeTemporaryQuery } from "./client";
 
 vi.mock("../auth/authClient", async () => {
   const actual = await vi.importActual<typeof import("../auth/authClient")>("../auth/authClient");
@@ -10,6 +10,7 @@ vi.mock("../auth/authClient", async () => {
 
 describe("authenticated API client", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.stubEnv("VITE_API_BASE_URL", "https://api.example.test/");
     vi.mocked(auth.idToken).mockResolvedValue("fresh-id-token");
     vi.stubGlobal("fetch", vi.fn());
@@ -63,5 +64,63 @@ describe("authenticated API client", () => {
     vi.mocked(auth.idToken).mockRejectedValue(new Error("Your session has expired."));
     await expect(apiRequest("/health")).rejects.toThrow(/session has expired/i);
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("polls an asynchronous temporary query until fresh results are ready", async () => {
+    vi.useFakeTimers();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            query_id: "query-1",
+            processing_status: "AWAITING_UPLOAD",
+            retry_after_seconds: 3,
+          }),
+          { status: 202, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            query_id: "query-1",
+            processing_status: "PROCESSING",
+            retry_after_seconds: 3,
+          }),
+          { status: 202, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            query_id: "query-1",
+            processing_status: "READY",
+            detected_species_counts: { dingo: 1 },
+            model_version: "supplied-v1",
+            media: [],
+            total: 0,
+            truncated: false,
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+
+    const result = executeTemporaryQuery({
+      query_id: "query-1",
+      temp_key: "query-temp/actor/query-1/query.jpg",
+      upload_url: "https://storage.example/put",
+      required_headers: {},
+      expires_in: 300,
+    });
+    await vi.advanceTimersByTimeAsync(6000);
+    await expect(result).resolves.toMatchObject({
+      processing_status: "READY",
+      detected_species_counts: { dingo: 1 },
+    });
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(3);
+    expect(vi.mocked(fetch).mock.calls.map((call) => call[1]?.method)).toEqual([
+      "POST",
+      "GET",
+      "GET",
+    ]);
   });
 });

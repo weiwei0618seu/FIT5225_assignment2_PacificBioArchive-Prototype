@@ -110,7 +110,12 @@ class AuthIamTemplateTests(unittest.TestCase):
 
     def test_lambda_roles_trust_only_lambda_and_bound_wildcard_resource(self) -> None:
         global_resources: list[tuple[str, str, set[str]]] = []
-        for logical_id in ("CoreApiRole", "MediaProcessorRole", "TemporaryQueryRole"):
+        for logical_id in (
+            "CoreApiRole",
+            "MediaProcessorRole",
+            "TemporaryQueryRole",
+            "TemporaryQueryOrchestratorRole",
+        ):
             with self.subTest(role=logical_id):
                 role = self.resources[logical_id]["Properties"]
                 trust = role["AssumeRolePolicyDocument"]["Statement"]
@@ -164,6 +169,7 @@ class AuthIamTemplateTests(unittest.TestCase):
         core = actions("CoreApiRole")
         processor = actions("MediaProcessorRole")
         temporary = actions("TemporaryQueryRole")
+        orchestrator = actions("TemporaryQueryOrchestratorRole")
         self.assertIn("sns:Subscribe", core)
         core_statements = self.resources["CoreApiRole"]["Properties"]["Policies"][0][
             "PolicyDocument"
@@ -186,6 +192,19 @@ class AuthIamTemplateTests(unittest.TestCase):
         self.assertIn("sns:Publish", processor)
         self.assertNotIn("sns:Publish", temporary)
         self.assertEqual(temporary.intersection({"dynamodb:PutItem", "dynamodb:DeleteItem"}), set())
+        self.assertEqual(
+            orchestrator,
+            {"dynamodb:GetItem", "dynamodb:PutItem", "lambda:InvokeFunction"},
+        )
+        orchestrator_statements = self.resources["TemporaryQueryOrchestratorRole"][
+            "Properties"
+        ]["Policies"][0]["PolicyDocument"]["Statement"]
+        invoke = next(
+            statement
+            for statement in orchestrator_statements
+            if statement.get("Sid") == "InvokeTemporaryQueryMl"
+        )
+        self.assertEqual(invoke["Resource"], {"Ref": "TemporaryQueryFunctionArn"})
 
 
 if __name__ == "__main__":

@@ -9,8 +9,9 @@ wording in the assignment PDF.
 Before every deploy, confirm the AWS console still shows the Free Plan/expected
 credits and no unexpected spend. Do not upgrade the plan. The template creates
 no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF. DynamoDB is
-on-demand, logs expire after seven days, temporary query objects expire after
-one day, and API traffic is throttled. The optional budget resource is disabled
+on-demand, temporary-query job rows expire after one hour, logs expire after
+seven days, temporary query objects expire after one day, and API traffic is
+throttled. The optional budget resource is disabled
 by default because Academy roles may reject it.
 
 S3 media/model buckets and the Cognito user pool use `DeletionPolicy: Retain`.
@@ -190,7 +191,8 @@ core Cognito requirement is complete while rubric item 3.4 remains unclaimed.
 - same bytes under another filename rejected as duplicate;
 - video samples one frame per second;
 - species, strict count/AND, thumbnail and temporary-image queries;
-- temporary object absent after success and forced failure;
+- temporary query returns `202` while the S3/EventBridge orchestrator runs,
+  reaches `READY`, and leaves no temporary object after success or forced failure;
 - bulk add/remove tag, including removal of an absent tag;
 - original/thumbnail/metadata/checksum deletion and idempotent retry;
 - confirmed watched-tag SNS email;

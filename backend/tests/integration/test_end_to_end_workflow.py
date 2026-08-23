@@ -26,6 +26,7 @@ from pacific_bioarchive.persistence.notifications import (
     InMemoryNotificationEventRepository,
     InMemorySubscriptionRepository,
 )
+from pacific_bioarchive.persistence.query_jobs import InMemoryTemporaryQueryRepository
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -173,6 +174,7 @@ class CompleteLocalWorkflowTests(unittest.TestCase):
                 image_inference=None,
                 bucket_name="private-media",
             ),
+            temp_query_jobs=InMemoryTemporaryQueryRepository(),
         )
         app = CoreApiApplication(services, version="integration")
         processor = MediaProcessingService(

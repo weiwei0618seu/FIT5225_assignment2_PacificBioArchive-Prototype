@@ -41,9 +41,12 @@ Prototype is complete and the four students begin their real integration work.
   deletion, and subscription management.
 - **Lambda ML container functions** — asynchronous media processing and
   temporary-file inference using the provided models.
+- **Temporary-query orchestrator Lambda** — bridges S3 events to long ML
+  inference without holding an API Gateway request open.
 - **DynamoDB media table** — media metadata and processing state.
 - **DynamoDB dedup table** — atomic checksum reservations with TTL.
 - **DynamoDB subscriptions table** — user/tag/SNS subscription state.
+- **DynamoDB temporary-query table** — owner-scoped, one-hour TTL polling state.
 - **SNS topic** — tag-filtered email notifications.
 - **CloudWatch** — structured logs, alarms, and short log retention.
 - **S3 static web hosting** — deployable React SPA; protected routes redirect
@@ -141,6 +144,7 @@ For each stage:
 | presigned thumbnail URL changes | persist object key and parse/normalize incoming URL before lookup |
 | frame-level double counting | define video count as the maximum simultaneous count per species across sampled frames; document it |
 | temporary query file retained after failure | `finally` deletion plus S3 one-day lifecycle fallback |
+| temporary ML exceeds HTTP API timeout | S3/EventBridge orchestration plus owner-scoped TTL status polling |
 | SNS pending confirmation | expose status and clear user guidance; do not report success until confirmed |
 | AWS Free Plan depletion | cost guardrails above; no upgrade; stop before paid/high-risk actions |
 | AWS-only versus PDF language | retain instructor's written clarification and cite it in the final report |

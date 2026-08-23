@@ -28,7 +28,7 @@
 | species query | automatic or manual presence returns correct media |
 | min count + AND | all conditions required, boundary equality included |
 | thumbnail lookup | signed/unsigned URL maps to original |
-| temporary query | tags detected; object deleted on success and failure |
+| temporary query | async owner-scoped polling; tags detected; no signed URL persistence; object deleted on success and failure |
 | bulk tags | multiple URLs; add/remove; missing delete ignored |
 | delete | originals/thumbnails/records/dedup removed; retry safe |
 | authorization | unauthenticated blocked; valid subject propagated |

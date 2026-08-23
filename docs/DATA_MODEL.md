@@ -60,6 +60,24 @@ Primary key: `user_sub`.
 | `status` | `PENDING/CONFIRMED/ERROR` |
 | `updated_at` | audit timestamp |
 
+## Temporary-query job table
+
+Primary key: `query_id`. Items expire through DynamoDB TTL after one hour.
+
+| Field | Purpose |
+|---|---|
+| `query_id` | stable random job identifier |
+| `owner_sub` | owner-only polling and ML event binding |
+| `temp_key` | exact S3 input bound at initiation |
+| `status` | `AWAITING_UPLOAD/PROCESSING/READY/FAILED` |
+| `species_counts` | detected canonical counts on success |
+| `matched_file_ids` | stable result IDs, never signed URLs |
+| `total` / `truncated` | result-page semantics |
+| `model_version` | supplied-model version used |
+| `error_code` | safe terminal failure code only |
+| `expires_at` | one-hour TTL epoch |
+| `version` | optimistic concurrency guard |
+
 ## Notification event item
 
 The notification-events table has primary key `event_id`. Notification
@@ -75,5 +93,6 @@ retry can try again.
 - a manual tag counts as present with effective count 1 for simple species
   queries, but does not fabricate an automatic animal count greater than one;
 - multi-tag inputs require every tag condition (logical AND);
-- temporary-file query uses the detected canonical tag set with minimum 1;
+- temporary-file query uses the detected canonical tag set with minimum 1 and
+  regenerates private URLs only when the owner polls a ready job;
 - only `READY` media appears in normal results.

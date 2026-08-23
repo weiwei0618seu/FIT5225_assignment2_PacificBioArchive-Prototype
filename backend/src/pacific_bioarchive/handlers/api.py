@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -13,7 +14,12 @@ from pacific_bioarchive.application.queries import MediaQueryService, QueryResul
 from pacific_bioarchive.application.temp_queries import TemporaryQueryService
 from pacific_bioarchive.application.uploads import UploadService
 from pacific_bioarchive.domain.media import MediaRecord, ProcessingStatus
-from pacific_bioarchive.domain.repositories import MediaRepository, RecordNotFoundError
+from pacific_bioarchive.domain.query_jobs import TemporaryQueryJob, TemporaryQueryStatus
+from pacific_bioarchive.domain.repositories import (
+    MediaRepository,
+    RecordNotFoundError,
+    TemporaryQueryRepository,
+)
 from pacific_bioarchive.domain.storage import PrivateObjectStorage
 from pacific_bioarchive.handlers.http import (
     HttpApiError,
@@ -24,6 +30,7 @@ from pacific_bioarchive.handlers.http import (
 )
 
 FILE_ROUTE = re.compile(r"^/media/([^/]+)$")
+TEMP_QUERY_ROUTE = re.compile(r"^/queries/file/([^/]+)$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,6 +42,7 @@ class CoreApiServices:
     management: MediaManagementService
     notifications: NotificationService
     temp_queries: TemporaryQueryService
+    temp_query_jobs: TemporaryQueryRepository
 
 
 class CoreApiApplication:
@@ -78,6 +86,10 @@ class CoreApiApplication:
             }
         if route == ("POST", "/queries/file/init"):
             return self._temp_init(request)
+        if request.method in {"GET", "POST"} and (
+            match := TEMP_QUERY_ROUTE.fullmatch(request.path)
+        ):
+            return self._temp_status(request, match.group(1))
         if route == ("POST", "/media/tags"):
             return self._edit_tags(request)
         if route == ("POST", "/media/delete"):
@@ -120,6 +132,14 @@ class CoreApiApplication:
             size_bytes=request.body["size_bytes"],
             checksum=str(request.body["checksum"]),
         )
+        self._services.temp_query_jobs.create(
+            TemporaryQueryJob(
+                query_id=ticket.query_id,
+                owner_sub=request.auth.subject,
+                temp_key=ticket.temp_key,
+                expires_at=int(time.time()) + 3600,
+            )
+        )
         return 201, {
             "query_id": ticket.query_id,
             "temp_key": ticket.temp_key,
@@ -127,6 +147,60 @@ class CoreApiApplication:
             "required_headers": ticket.upload.headers,
             "expires_in": ticket.upload.expires_in,
         }
+
+    def _temp_status(self, request: HttpRequest, query_id: str) -> tuple[int, object]:
+        normalized_query_id = query_id.strip()
+        if not normalized_query_id or any(
+            token in normalized_query_id for token in ("/", "\\", "..")
+        ):
+            raise HttpApiError(400, "INVALID_QUERY_ID", "query_id is invalid")
+        job = self._services.temp_query_jobs.get(normalized_query_id)
+        if job is None or job.owner_sub != request.auth.subject:
+            raise HttpApiError(
+                404, "TEMP_QUERY_NOT_FOUND", "The temporary query was not found"
+            )
+        if job.status in {
+            TemporaryQueryStatus.AWAITING_UPLOAD,
+            TemporaryQueryStatus.PROCESSING,
+        }:
+            return 202, {
+                "query_id": job.query_id,
+                "processing_status": job.status.value,
+                "retry_after_seconds": 3,
+            }
+        if job.status == TemporaryQueryStatus.FAILED:
+            messages = {
+                "NO_SPECIES_DETECTED": "No species were detected in the temporary query image",
+                "TEMP_QUERY_CHECKSUM_MISMATCH": "The temporary query upload failed integrity checks",
+            }
+            code = job.error_code or "TEMP_QUERY_PROCESSING_FAILED"
+            raise HttpApiError(
+                422,
+                code,
+                messages.get(code, "The temporary query image could not be analysed"),
+            )
+
+        records = []
+        for file_id in job.matched_file_ids:
+            record = self._services.media_repository.get(file_id)
+            if record is not None and record.processing_status == ProcessingStatus.READY:
+                records.append(record)
+        payload = self._query_payload(
+            QueryResult(
+                records=tuple(records),
+                total=job.total,
+                truncated=job.truncated,
+            )
+        )
+        payload.update(
+            {
+                "query_id": job.query_id,
+                "processing_status": job.status.value,
+                "detected_species_counts": dict(job.species_counts or {}),
+                "model_version": job.model_version,
+            }
+        )
+        return 200, payload
 
     def _edit_tags(self, request: HttpRequest) -> tuple[int, object]:
         result = self._services.management.edit_tags(
@@ -255,6 +329,9 @@ def _build_application() -> CoreApiApplication:
         DynamoNotificationEventRepository,
         DynamoSubscriptionRepository,
     )
+    from pacific_bioarchive.persistence.query_jobs import (
+        DynamoTemporaryQueryRepository,
+    )
     from pacific_bioarchive.persistence.s3 import S3ObjectStorage
     from pacific_bioarchive.persistence.sns import SnsNotificationTopic
 
@@ -275,6 +352,9 @@ def _build_application() -> CoreApiApplication:
         ),
     )
     queries = MediaQueryService(media, bucket_name=bucket)
+    temp_query_jobs = DynamoTemporaryQueryRepository(
+        dynamodb.Table(os.environ["PBA_TEMP_QUERIES_TABLE"])
+    )
     services = CoreApiServices(
         upload=UploadService(media_repository=media, dedup_repository=dedup, storage=storage),
         media_repository=media,
@@ -294,6 +374,7 @@ def _build_application() -> CoreApiApplication:
             image_inference=None,
             bucket_name=bucket,
         ),
+        temp_query_jobs=temp_query_jobs,
     )
     return CoreApiApplication(services, version=os.getenv("PBA_APP_VERSION", "0.1.0"))
 

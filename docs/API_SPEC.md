@@ -82,16 +82,22 @@ short-lived presigned PUT URL.
 
 ### `POST /queries/file/{query_id}`
 
-Input: `{"temp_key":"query-temp/<subject>/<query-id>/input.jpg"}`. The ML
-function detects the temporary file's tags, queries ready media with logical
-AND, and deletes the temp object in `finally`. Returns detected tags and matches.
-It never creates a media/dedup record.
+Starts/status-checks the already uploaded query job and normally returns `202`
+with `AWAITING_UPLOAD` or `PROCESSING`. S3 EventBridge invokes a bounded ZIP
+orchestrator outside the HTTP request timeout; it calls the supplied-model ML
+container and persists only stable result IDs/counts in a one-hour TTL table.
 
-This execution route is integrated with the separate ML container Lambda rather
-than the lightweight core API function. The function validates S3 metadata,
-checksum header and downloaded SHA-256, and deletes the temporary object in
-`finally` on success or failure. Cross-user/query keys return `400
-TEMP_QUERY_FORBIDDEN` without deleting another user's object.
+### `GET /queries/file/{query_id}`
+
+Polls the same owner-scoped job. It returns `202` plus
+`retry_after_seconds` while work is pending, `200` with detected tags and fresh
+private media URLs when `READY`, or a safe `422` error when `FAILED`. A job
+belonging to another Cognito subject is indistinguishable from a missing job.
+
+The ML function validates S3 metadata, checksum header and downloaded SHA-256,
+then deletes the temp object in `finally` on success or failure. The async job
+never creates a media/dedup record and never persists presigned URLs. The S3
+one-day lifecycle remains a fallback if the ML runtime is forcibly terminated.
 
 ## Tag management
 

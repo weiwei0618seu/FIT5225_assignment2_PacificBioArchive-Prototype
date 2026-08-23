@@ -17,8 +17,8 @@ so this implementation is AWS-only despite older multi-cloud PDF wording.
 - supplied weights are reused without retraining and three expected fixtures
   pass locally and in the Linux Lambda image;
 - the immutable ML image is published to ECR by secret-free GitHub OIDC;
-- backend: 110 tests, 90.12% domain/application coverage;
-- frontend: 20 tests plus typecheck, production build and ESLint;
+- backend: 121 tests, 89.39% domain/application coverage;
+- frontend: 23 tests plus typecheck, production build and ESLint;
 - CloudFormation/cfn-lint and security assertions pass;
 - live AWS root-stack/UI/E2E evidence remains Stage 6.3's final gate and is not
   represented as successful until observed.
@@ -154,6 +154,9 @@ artifacts exist.
   record or upload different content.
 - **Processing remains pending:** use a short supported file, inspect the media
   processor log and confirm the S3 EventBridge rule.
+- **Temporary query remains pending:** inspect the temporary-query orchestrator
+  and ML logs; the supplied model may take over two minutes on a cold CPU Lambda,
+  so the browser polls instead of holding an HTTP request open.
 - **401/redirect:** sign in again and verify deployed Cognito/API identifiers.
 - **SNS remains PENDING:** open the AWS subscription email and confirm it.
 - **Academy Lambda quota error:** use the current template (3008 MiB and no
