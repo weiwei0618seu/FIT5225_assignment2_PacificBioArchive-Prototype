@@ -6,32 +6,32 @@ automated evidence exist but live AWS/human confirmation is still required;
 
 | Rubric item | Status | Evidence / remaining live gate |
 |---|---|---|
-| 1.1 Cognito sign-up/sign-in/sign-out | READY | Native flows, all required fields and tests; verify real Cognito email/session. |
+| 1.1 Cognito sign-up/sign-in/sign-out | PASS | Real sign-up, email verification, sign-in and sign-out pass; a direct post-logout protected-page visit returned to sign-in. |
 | 1.2 block/redirect unauthenticated | PASS | CloudFront root redirected to sign-in; all business routes use JWT and `/health` returned 401 anonymously. |
 | 1.3 fine-grained IAM | PASS | Live acceptance observed separate bounded Lambdas, private encrypted TLS-only S3, immutable ECR and no excluded services. |
-| 2.1.1 upload/checksum dedup | PASS/READY | Unit/integration pass; demonstrate exact-byte duplicate in AWS. |
-| 2.1.2 thumbnail/video 1 fps | PASS/READY | Aspect/compression and sampling tests; verify stored thumbnail/short live video. |
-| 2.1.3 ML tagging/DB insertion | PASS/READY | Real local/Linux/ECR image proof; execute real Lambda and inspect DynamoDB. |
-| 2.2.1 tag/count/species AND | PASS/READY | Boundary/AND tests and UI; run against live records. |
-| 2.2.2 thumbnail to original | PASS/READY | URL normalization tests/UI; live expiring URL lookup. |
-| 2.2.3 query by uploaded file | PASS/READY | Success/failure cleanup and cross-user tests; prove live temp key removed. |
-| 2.3.1 bulk tag edit | PASS/READY | Multi-item add/remove/absent-delete tests/UI; live owner update. |
-| 2.3.2 bulk complete delete | PASS/READY | Object/record/dedup/idempotency tests/UI confirmation; live outcomes. |
-| 2.3.3 watched-tag email | READY | SNS filter/dedup implementation/tests; human email confirmation and delivery. |
-| 3.1 auth/upload UI | PASS/READY | Live empty-field sign-in/registration screenshots and 22 React tests pass; authenticated upload still needs the controlled user. |
-| 3.2 queries UI | PASS/READY | Four modes, thumbnails/original links and empty states; live walkthrough. |
-| 3.3 bulk/usability UI | PASS/READY | Bulk selection, edit, destructive confirmation, outcomes; live walkthrough. |
+| 2.1.1 upload/checksum dedup | PASS | Real image/video uploads pass and the deployed UI rejected the existing fixture's exact bytes before storage. |
+| 2.1.2 thumbnail/video 1 fps | PASS | Live image thumbnail and three samples for a three-second video observed. |
+| 2.1.3 ML tagging/DB insertion | PASS | Both live records reached `READY` with supplied-model counts and persisted metadata. |
+| 2.2.1 tag/count/species AND | PASS | Live two-condition minimum-count query returned exactly the two qualifying records. |
+| 2.2.2 thumbnail to original | PASS | Live signed-thumbnail reverse lookup returned the original action; evidence redacts the URL and identifier. |
+| 2.2.3 query by uploaded file | PASS | Live asynchronous success and forced failure both cleaned `query-temp/`; READY/FAILED jobs had one-hour TTL. |
+| 2.3.1 bulk tag edit | PASS | Live two-record add/remove passed; repeated absent-remove reported zero changes. |
+| 2.3.2 bulk complete delete | PASS | Both records returned `Deleted`, the retry returned `Already absent`, and live S3/media/dedup checks found no residue. |
+| 2.3.3 watched-tag email | PASS | Live subscription is `CONFIRMED`; a watched-tag upload reached `READY`, created its event claim and produced the human-observed email. |
+| 3.1 auth/upload UI | PASS | Registration/sign-in and authenticated real image/video upload observed; 23 React tests pass. |
+| 3.2 queries UI | PASS | Species, strict-AND, thumbnail-reference and temporary-image modes all pass live. |
+| 3.3 bulk/usability UI | PASS | Live two-record selection, add/remove, destructive confirmation, outcome list and retry all passed. |
 | 3.4 external account | OPTIONAL | Cognito code-flow/PKCE path exists; needs team-owned Google OAuth credentials and live record. |
 | 4.1 demo | READY | `DEMO_PLAN.md`, fixtures, member ownership/Q&A; full rehearsal required. |
-| 4.2 Team Report | READY | Source docs/user guide/handoff exist; names/IDs and official-icon PDF still human-owned. |
+| 4.2 Team Report | READY | Verified official-icon draft exists; names/IDs, truthful contributions and final PDF export remain human-owned. |
 | 4.2 Individual Reports | READY | Each student must independently write/submit their own report. |
 | GenAI declaration | PASS/READY | `GENAI_USAGE.md` maintained; must also appear in both submitted report types. |
 
 ## Current measured gate
 
-- backend: 114 passed (plus one Windows-only Bash availability skip);
-  domain/application coverage 90.12%; Ruff pass;
-- frontend: 22 passed; TypeScript, Vitest, build and ESLint pass;
+- backend: 121 passed (plus one Windows-only Bash availability skip);
+  domain/application coverage 89.39%; Ruff pass;
+- frontend: 23 passed; TypeScript, Vitest, build and ESLint pass;
 - CloudFormation: cfn-lint pass; infrastructure security assertions pass;
 - real supplied model: three expected fixtures pass locally and in Linux;
 - immutable ECR publish: workflow run `32601871666`, job `97101257587`,
@@ -40,10 +40,17 @@ automated evidence exist but live AWS/human confirmation is still required;
 - deployment toolchain: workflow run `32610702537`, job `97123189935`,
   official SAM Python 3.12 image, container build and pnpm 11.19.0 frontend
   build successful; failed root-stack record deletion waiter returned zero;
-- live root stack: `CREATE_COMPLETE`; ten sanitized infrastructure PASS labels;
-  private CloudFront login/registration deployed with no browser errors;
-- authenticated UI/ML/SNS E2E: pending the student-controlled email steps.
+- live root stack: asynchronous update `UPDATE_COMPLETE`; ten sanitized
+  infrastructure PASS labels; private CloudFront SPA deployed;
+- authenticated UI/ML: Cognito registration/sign-in, image/video processing,
+  thumbnail, three one-frame-per-second video samples, strict-AND search, bulk
+  tag addition and asynchronous temporary query pass live;
+- live security/cost: temporary job TTL/SSE/on-demand mode, scoped roles, JWT
+  routes and four-log-group sensitive-field scan pass;
+- sanitized live E2E: 22 required checks PASS; Cognito and SNS confirmations
+  plus watched-tag inbox delivery are human-observed.
 
-The project should not be called finally complete while any READY item required
-for the core demo lacks observed live evidence. Google login may remain clearly
-documented as optional if credentials are unavailable.
+Every core live requirement now has observed evidence. Remaining READY items
+are submission/rehearsal responsibilities: four truthful member identities and
+contributions, the final Team Report PDF, individual reports and team rehearsal.
+Google login remains a clearly documented optional enhancement.

@@ -11,12 +11,13 @@ Observed deployment controls
 - The root and nested templates contained no excluded high-cost service type.
 - Google federation remained disabled and CreateCostBudget remained disabled.
 - The ML image parameter used the verified immutable Sydney ECR digest.
-- The same-name root stack reached CREATE_COMPLETE with no failed or rollback event.
+- The same-name root stack first reached CREATE_COMPLETE, then UPDATE_COMPLETE
+  after the no-replacement asynchronous temporary-query update.
 - The frontend production archive SHA-256 was verified before S3 synchronization.
 - The second CloudFront invalidation completed after the federation-visibility fix.
 
 Read-only live acceptance output
-- PASS: CloudFormation stack is CREATE_COMPLETE
+- PASS: CloudFormation stack is in a stable complete state
 - PASS: No EC2, NAT, RDS, OpenSearch, SageMaker, EFS or WAF resources are in the stack
 - PASS: All Lambdas are active, bounded, unreserved and use the expected ML digest
 - PASS: All S3 buckets block public access, encrypt at rest and require TLS

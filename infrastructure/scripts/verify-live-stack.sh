@@ -30,11 +30,13 @@ aws_json() {
 }
 
 stack="$(aws_json cloudformation describe-stacks --stack-name "$stack_name")"
-if ! jq -e '.Stacks | length == 1 and .[0].StackStatus == "CREATE_COMPLETE"' \
+if ! jq -e '.Stacks | length == 1 and
+  (.[0].StackStatus == "CREATE_COMPLETE" or
+   .[0].StackStatus == "UPDATE_COMPLETE")' \
   <<<"$stack" >/dev/null; then
-  fail "The requested stack is not in CREATE_COMPLETE"
+  fail "The requested stack is not in a stable complete state"
 fi
-pass "CloudFormation stack is CREATE_COMPLETE"
+pass "CloudFormation stack is in a stable complete state"
 
 stack_output() {
   local output_key="$1"

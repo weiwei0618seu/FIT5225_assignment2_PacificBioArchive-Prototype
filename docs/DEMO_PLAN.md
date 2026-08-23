@@ -3,7 +3,7 @@
 ## Before the session
 
 - all four members join Zoom and can explain their assigned code;
-- verify AWS Free Plan/billing, stack `CREATE_COMPLETE`, CloudFront HTTPS, ECR
+- verify AWS Free Plan/billing, stack `CREATE_COMPLETE` or `UPDATE_COMPLETE`, CloudFront HTTPS, ECR
   digest and CloudWatch alarms/log retention;
 - prepare one verified Cognito demo account and one confirmed SNS subscription;
 - keep a second unregistered email only if live registration will be shown;
@@ -87,4 +87,3 @@ Mermaid engineering sketch the final report diagram.
 - Which IAM role can access each bucket/table/topic?
 - Why is reserved concurrency omitted in this Academy account?
 - Which statements are proven locally, in Linux CI, and live in AWS?
-

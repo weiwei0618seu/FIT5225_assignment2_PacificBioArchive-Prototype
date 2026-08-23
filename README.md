@@ -20,10 +20,16 @@ so this implementation is AWS-only despite older multi-cloud PDF wording.
 - backend: 121 tests, 89.39% domain/application coverage;
 - frontend: 23 tests plus typecheck, production build and ESLint;
 - CloudFormation/cfn-lint and security assertions pass;
-- live AWS root-stack/UI/E2E evidence remains Stage 6.3's final gate and is not
-  represented as successful until observed.
+- the Sydney root stack is `UPDATE_COMPLETE`, the private CloudFront SPA is
+  live, and Cognito sign-in, image/video ML, thumbnail, strict-AND search, bulk
+  tag add/remove, complete idempotent deletion, asynchronous temporary
+  query/cleanup and log redaction have been observed;
+- Stage 6.3 live E2E is complete: the confirmed watched-tag email was observed,
+  logout blocked a direct protected-route revisit, and the sanitized evidence
+  validator passes all 22 required checks plus three human confirmations.
 
-See [HD_RUBRIC_AUDIT.md](docs/HD_RUBRIC_AUDIT.md) for the honest evidence gap.
+See [HD_RUBRIC_AUDIT.md](docs/HD_RUBRIC_AUDIT.md) for the evidence record and
+remaining human submission responsibilities.
 
 ## Repository layout
 
@@ -137,7 +143,8 @@ rules:
 - [four-member handoff](docs/TEAM_HANDOFF_PLAN.md) and
   [official-repository integration](docs/OFFICIAL_REPO_INTEGRATION_PLAN.md)
 - [visually verified Team Report draft](docs/report/README.md) with official AWS
-  architecture icons (member IDs and live screenshots still required)
+  architecture icons and sanitized live screenshots (member names/IDs,
+  truthful contribution confirmation and final PDF export still required)
 - per-stage reports/handoffs under `docs/stages/`
 
 Before handoff, run `./scripts/verify-final-delivery.ps1`. The stricter

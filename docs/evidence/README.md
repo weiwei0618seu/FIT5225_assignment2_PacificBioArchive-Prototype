@@ -38,19 +38,29 @@ Observed Stage 6.3 evidence:
   container, pnpm 11.19.0, free-plan preflight and failed-stack deletion gate.
 - `LIVE_STACK_ACCEPTANCE.txt` records the reviewed change set, successful root
   stack, frontend publication and sanitized ten-item live acceptance result.
-- `live-ui/` contains empty-field registration/login screenshots plus a
-  sanitized authenticated real-model image/thumbnail result. Query-management,
-  logout and human SNS-confirmation/delivery evidence remain pending.
+- `live-ui/` contains empty-field registration/login screenshots plus sanitized
+  authenticated evidence for real-model upload/thumbnail processing, a
+  two-condition strict-AND query after a two-record bulk tag addition, and the
+  asynchronous temporary-image query. It also records exact-byte checksum
+  duplicate rejection and sanitized thumbnail-to-original reverse lookup. The
+  live temporary S3 prefix was empty after both successful queries and a forced
+  undecodable-image failure. READY/FAILED jobs carried a one-hour TTL. Bulk tag
+  removal, its zero-change retry, complete media deletion and the
+  `Already absent` retry were observed. A sanitized AWS check found no related
+  S3 object, media record or checksum reservation. The SNS subscription later
+  reached `CONFIRMED`; a new watched-tag test upload reached `READY`, and AWS
+  recorded its notification-event claim with one confirmed email subscriber.
+  The recipient then observed the watched-tag email. Logout completed, and a
+  direct protected-route revisit returned to the blank sign-in screen.
 
-`LIVE_E2E.json` is deliberately absent until the complete live workflow has
-been observed. Before it can satisfy the final gate, run:
+`LIVE_E2E.json` records the complete sanitized workflow. Verify it with:
 
 ```powershell
 ./scripts/verify-live-e2e-evidence.ps1
 ```
 
-The file must use schema version 1, name every required check with its evidence
-source and a short sanitized note, and record the Cognito verification, SNS
+The file uses schema version 1, names every required check with its evidence
+source and a short sanitized note, and records the Cognito verification, SNS
 confirmation and watched-tag delivery as human observations. The validator
 rejects endpoints, AWS ARNs, tokens, credentials, signed-request fields and
 email addresses rather than attempting to redact them after they are committed.

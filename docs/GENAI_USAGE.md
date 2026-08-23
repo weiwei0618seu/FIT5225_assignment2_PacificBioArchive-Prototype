@@ -72,6 +72,27 @@ limited.
   credential/local-path exclusions, supplied Git LFS weights, full validation
   and observed live/final evidence. The strict mode is designed to fail while
   any real AWS, human-owned report or final-branch requirement is missing.
+- Diagnosed the deployed synchronous temporary-query timeout and implemented a
+  polled S3/EventBridge/orchestrator/ML/TTL-job workflow with narrowly scoped
+  IAM. Browser-assisted live checks observed `PROCESSING` to `READY`, strict
+  AND results, success/failure S3 cleanup and one-hour READY/FAILED job expiry.
+- Assisted with sanitized authenticated acceptance: real image/video ML,
+  thumbnail and three one-frame-per-second samples, checksum duplicate
+  rejection, bulk tag addition, thumbnail reverse lookup, and a recent-log
+  sensitive-field scan. Cognito/SNS email links remained human actions and no
+  password, code, token, signed URL or private identifier was retained.
+- After the user separately approved the destructive test, exercised live
+  two-record tag removal and its zero-change retry, permanent deletion and its
+  `Already absent` retry, then used a sanitized AWS-side check to confirm that
+  no related S3 object, DynamoDB media item or checksum reservation remained.
+- After human SNS confirmation, uploaded one supplied watched-tag fixture,
+  observed the READY result and durable notification-event claim, and recorded
+  the recipient's confirmation of real email delivery. Logged out last,
+  verified protected-route redirection, and produced opaque-redacted evidence
+  without retaining the remembered email or password field contents.
+- Updated the read-only stack verifier to accept both stable CloudFormation
+  completion states after observing the live stack at `UPDATE_COMPLETE`, added
+  regression coverage, and reran all ten sanitized live checks.
 - Drafted the deployment/user/demo guides, HD rubric audit, four-member handoff
   and official-repository integration plan. Students must verify deployment
   details, replace member placeholders and build the submitted report themselves.

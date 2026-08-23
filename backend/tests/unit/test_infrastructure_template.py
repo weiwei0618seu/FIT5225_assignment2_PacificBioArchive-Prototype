@@ -298,6 +298,7 @@ class LiveStackVerificationScriptTests(unittest.TestCase):
     def test_verifies_live_state_security_cost_and_authentication_controls(self) -> None:
         required_evidence = (
             'StackStatus == "CREATE_COMPLETE"',
+            'StackStatus == "UPDATE_COMPLETE"',
             "lambda get-function --function-name",
             "lambda get-function-concurrency --function-name",
             ".ReservedConcurrentExecutions == null",

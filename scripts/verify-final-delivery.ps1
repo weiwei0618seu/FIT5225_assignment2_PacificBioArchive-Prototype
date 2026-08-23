@@ -238,10 +238,16 @@ try {
         $finalArtifacts = @(
             'docs/evidence/LIVE_STACK_ACCEPTANCE.txt',
             'docs/evidence/LIVE_E2E.json',
+            'docs/evidence/live-ui/00-registration.png',
             'docs/evidence/live-ui/01-login-protected.png',
             'docs/evidence/live-ui/02-upload-ml-thumbnail.png',
-            'docs/evidence/live-ui/03-query-management.png',
-            'docs/evidence/live-ui/04-notification-logout.png',
+            'docs/evidence/live-ui/03-strict-and-manual-tag.png',
+            'docs/evidence/live-ui/04-temporary-query-async.png',
+            'docs/evidence/live-ui/05-duplicate-checksum-rejected.png',
+            'docs/evidence/live-ui/06-thumbnail-to-original.png',
+            'docs/evidence/live-ui/07-temporary-query-failure-cleanup.png',
+            'docs/evidence/live-ui/08-manage-cleanup-and-sns.png',
+            'docs/evidence/live-ui/09-logout-protected.png',
             'docs/report/Pacific_BioArchive_Team_Report_FINAL.pdf',
             'docs/stages/STAGE_7.1_REPORT.md',
             'docs/stages/STAGE_7.1_HANDOFF.md'
@@ -254,7 +260,7 @@ try {
         $liveAcceptance = Get-Content -LiteralPath `
             'docs/evidence/LIVE_STACK_ACCEPTANCE.txt' -Raw
         foreach ($expectedPass in @(
-            'PASS: CloudFormation stack is CREATE_COMPLETE',
+            'PASS: CloudFormation stack is in a stable complete state',
             'PASS: All Lambdas are active, bounded, unreserved and use the expected ML digest',
             'PASS: All S3 buckets block public access, encrypt at rest and require TLS',
             'PASS: All DynamoDB tables are active, encrypted and PAY_PER_REQUEST',

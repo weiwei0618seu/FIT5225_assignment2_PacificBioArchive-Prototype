@@ -25,10 +25,10 @@ names/IDs only after the students confirm them.
   `temp_queries.py`, `handlers/api.py`, `handlers/http.py`, persistence adapters
   used by these flows and tests.
 - Required verification: atomic checksum reservation, strict AND/minimum counts,
-  species, thumbnail and temporary-file queries, bulk tag add/remove, complete
-  idempotent delete and safe API errors.
+  species, thumbnail and owner-scoped asynchronous temporary-query job states,
+  bulk tag add/remove, complete idempotent delete and safe API errors.
 - Must explain: automatic versus manual tags, owner checks, stable object keys,
-  presigned URL normalization and partial-delete reporting.
+  presigned URL normalization, one-hour job TTL and partial-delete reporting.
 - Suggested official commit: `feat: add archive queries and bulk media management`.
 
 ## Member 3 — AWS eventing, notifications and infrastructure (25%)
@@ -36,14 +36,17 @@ names/IDs only after the students confirm them.
 - Branches: `stage-3.1-s3-upload-workflow` through
   `stage-3.3-notifications`, `stage-6.1-infrastructure`, and
   `stage-6.3-aws-deployment`.
-- Focus files: S3/DynamoDB/SNS adapters, media processor handler,
-  `infrastructure/`, OIDC/ECR workflow and live-AWS evidence.
+- Focus files: S3/DynamoDB/SNS adapters, media processor and temporary-query
+  orchestrator handlers, `infrastructure/`, OIDC/ECR workflow and live-AWS
+  evidence.
 - Required verification: checksum-bound presign, replay-safe S3 event,
-  notification filter/dedup, least-privilege assertions, cfn-lint/SAM, reviewed
-  change set and live stack outputs.
-- Must explain: EventBridge prefix, SNS confirmation, OIDC subject restriction,
-  immutable digest, Retain policy, 3008 MiB/Academy concurrency adaptations and
-  free-plan boundary.
+  asynchronous success/failure cleanup and TTL, notification filter/dedup,
+  least-privilege assertions, cfn-lint/SAM, reviewed change set and live stack
+  outputs.
+- Must explain: separate EventBridge prefixes, the ZIP orchestrator-to-ML
+  boundary, SNS confirmation, OIDC subject restriction, immutable digest,
+  Retain policy, 3008 MiB/Academy concurrency adaptations and free-plan
+  boundary.
 - Suggested official commit: `feat: deploy event-driven AWS storage and notifications`.
 
 ## Member 4 — Authentication, UI and final delivery (25%)
@@ -68,4 +71,3 @@ names/IDs only after the students confirm them.
 4. Commit their owned delta with their own GitHub account to the private official
    repository; do not delegate all commits to one member.
 5. Prepare the listed Q&A topics and participate in the demo/peer assessment.
-

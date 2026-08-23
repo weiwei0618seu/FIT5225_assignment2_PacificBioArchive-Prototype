@@ -16,8 +16,10 @@ Prototype development. Four students perform and understand the integration.
 
 1. Member 1 adds ML/media code, supplied model acquisition/LFS instructions and
    their tests/evidence.
-2. Member 2 adds domain/application/API/query/management code and tests.
-3. Member 3 adds AWS adapters, infrastructure, workflows and deployment guide.
+2. Member 2 adds domain/application/API/query/management code, including the
+   temporary-job contract/polling API, and tests.
+3. Member 3 adds AWS adapters, EventBridge temporary-query orchestrator/IAM,
+   infrastructure, workflows and deployment guide.
 4. Member 4 adds Cognito/authentication, frontend and final user/demo documents.
 
 Each member should copy only their owned delta from the final Prototype tree,
@@ -54,9 +56,9 @@ for secrets, and confirm all four students have substantive commits.
 
 - Replace member placeholders with confirmed names/IDs and truthful percentages
   (each <=30%).
-- Build the Team Report architecture figure with official AWS icons.
+- Preserve the verified Team Report architecture figure built with official AWS
+  icons, and revalidate it if the final integrated architecture changes.
 - Include the private official repository link and a concise user guide.
 - Explicitly acknowledge Generative AI in Team and Individual Reports; omission
   makes those rubric sections zero.
 - Each student writes their own Individual Report/reflection independently.
-

@@ -8,8 +8,10 @@ quota remediation, same-name stack deployment, private SPA delivery, live
 security/cost acceptance and the complete browser demonstration.
 
 The same-name root stack, frontend and sanitized infrastructure acceptance are
-complete. The stage remains in progress only for authenticated UI/ML evidence
-and the Cognito/SNS confirmations that require a controlled email recipient.
+complete. Cognito registration/sign-in, real image/video ML, strict-AND search,
+bulk tag add/remove, complete idempotent deletion, asynchronous temporary-image
+query, confirmed watched-tag email delivery, logout and post-logout protection
+all pass live. Stage 6.3 is complete.
 
 ## Key files
 
@@ -31,7 +33,7 @@ and the Cognito/SNS confirmations that require a controlled email recipient.
 
 1. Confirm the browser is authenticated to account `835597620771` in Sydney,
    Billing/Free Plan still reports approximately US$0, and the accepted stack
-   remains `CREATE_COMPLETE`.
+   remains in `CREATE_COMPLETE` or `UPDATE_COMPLETE`.
 2. Preserve the retained media/model/Cognito resources from the two failed
    attempts; they require deliberate review and must not be broadly deleted.
 3. Re-run the sanitized read-only gate when rehearsing:
@@ -42,11 +44,12 @@ and the Cognito/SNS confirmations that require a controlled email recipient.
      | tee docs/evidence/LIVE_STACK_ACCEPTANCE.txt
    ```
 
-4. Use the deployed UI for the full `docs/DEMO_PLAN.md` sequence. Cognito email
-   verification and SNS email confirmation require a human recipient.
-5. Remove live demo media through the application and verify the corresponding
-   objects, records and deduplication state are gone. Retained infrastructure
-   cleanup is a separate, explicitly authorized task.
+4. Rehearse the complete `docs/DEMO_PLAN.md` sequence. Cognito verification,
+   SNS subscription confirmation and watched-tag inbox delivery are observed.
+5. The explicitly authorized live demo cleanup is complete: bulk remove and
+   permanent deletion both passed their repeated-operation checks, and the
+   corresponding objects, records and deduplication state are gone. Retained
+   infrastructure cleanup remains a separate, explicitly authorized task.
 
 ## What the member must understand
 
@@ -68,16 +71,21 @@ Local:
 ./infrastructure/scripts/validate.ps1
 ```
 
-Live, after `CREATE_COMPLETE`:
+Live, after `CREATE_COMPLETE` or `UPDATE_COMPLETE`:
 
 ```bash
 bash infrastructure/scripts/verify-live-stack.sh
 ```
 
-Latest local result is 114 backend tests, one Windows Bash skip, 90.12%
-domain/application coverage, 22 frontend tests and all lint/build/template
+Latest local result is 121 backend tests, one Windows Bash skip, 89.39%
+domain/application coverage, 23 frontend tests and all lint/build/template
 gates passing. The live script emitted all ten expected PASS labels; see
 `docs/evidence/LIVE_STACK_ACCEPTANCE.txt`.
+
+The accepted asynchronous update reached `UPDATE_COMPLETE`. A real temporary
+query reached `READY`, matched the image and video, left `query-temp/` empty and
+stored a one-hour TTL. The temporary-job table, JWT routes, new role boundaries
+and seven-day logs were also verified live.
 
 ## Likely demonstration questions
 
@@ -87,8 +95,8 @@ gates passing. The live script emitted all ten expected PASS labels; see
 - Show 1 frame/second video aggregation and where the supplied ML models run.
 - Demonstrate AND minimum-count queries, thumbnail recovery and temporary-file
   cleanup.
-- Explain complete deletion, notification deduplication and the SNS pending
-  state.
+- Explain complete deletion, notification deduplication and the SNS
+  confirmation/delivery boundary.
 - Identify which AWS resources could cost money and the controls that bound
   them.
 

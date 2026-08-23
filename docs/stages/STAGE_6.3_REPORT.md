@@ -2,10 +2,12 @@
 
 ## Status and objective
 
-**In progress — deployed core accepted.** The real Sydney stack and private SPA
-are live, and the read-only infrastructure acceptance gate passes. The stage
-remains open only for authenticated media/ML workflows and the Cognito/SNS
-email confirmations that require a student-controlled recipient.
+**Complete — deployed core and complete authenticated workflow accepted.**
+The real Sydney stack and private SPA are live, the read-only infrastructure
+acceptance gate passes, and real image/video ML, strict-AND search, bulk tag
+editing, complete idempotent deletion and asynchronous temporary-image query
+workflows have been observed. The recipient observed the watched-tag email,
+logout completed, and a direct protected-route revisit returned to sign-in.
 
 The deployment remains restricted to the Prototype repository and
 `ap-southeast-2`. It does not modify the formal Group 8 submission repository.
@@ -78,6 +80,55 @@ The deployment remains restricted to the Prototype repository and
   form and an empty browser error log. Disabled Google federation is now hidden
   instead of exposing an unusable button; the live page was rebuilt, published
   and rechecked.
+- Registered and verified a native Cognito user, signed in through the deployed
+  SPA and retained only sanitized/cropped evidence without the Cognito subject,
+  email address, token, signed URL or private file identifier.
+- Uploaded the supplied Australian brushturkey fixture and a three-second video.
+  Both reached `READY`; the image rendered its generated thumbnail and the
+  video recorded three one-frame-per-second samples using model `supplied-v1`.
+- Added the manual `reviewed` tag to both records in one bulk operation. A live
+  strict-AND query for `australian brushturkey >= 1` and `reviewed >= 1`
+  returned exactly the image and video.
+- Removed `reviewed` from both records in one bulk operation and repeated the
+  same removal; the retry reported zero tag changes. After explicit destructive
+  approval, permanently deleted both records and repeated the same request;
+  the first outcomes were `Deleted` and the retry outcomes were
+  `Already absent`. A sanitized AWS check found zero matching S3 objects,
+  DynamoDB media records and checksum reservations.
+- Observed the SNS email subscription transition to `CONFIRMED`, uploaded one
+  supplied watched-tag fixture, and observed it reach `READY`. Sanitized AWS
+  checks found one confirmed email subscriber and the upload's durable
+  notification-event claim. Inbox delivery was reported as PASS only after the
+  recipient confirmed receipt.
+- Logged out only after all authenticated checks completed. A direct visit to
+  the protected Manage route returned to the native sign-in page, and the
+  evidence image covers remembered email/password fields with opaque labelled
+  redactions.
+- Replaced the synchronous temporary-image request with an asynchronous flow:
+  S3 EventBridge delivery starts a narrowly scoped Python 3.12 orchestrator,
+  which invokes the existing ML Lambda and writes a one-hour-TTL job result for
+  frontend polling. The accepted stack update reached `UPDATE_COMPLETE` with
+  no resource replacement.
+- Observed a real temporary-image query transition from `PROCESSING` to `READY`,
+  detected one Australian brushturkey and matched the existing image and video.
+  The `query-temp/` prefix was empty after both successful live queries and the
+  READY job records carried a one-hour TTL.
+- Verified the temporary-job table uses on-demand capacity, server-side
+  encryption and TTL; all three temporary-query routes remain JWT protected,
+  and the new IAM permissions are limited to the job table and designated ML
+  Lambda.
+- Rebuilt the updated frontend with Node.js 22.19.0 and pnpm 11.19.0, uploaded
+  without deleting unrelated bucket objects, and observed the CloudFront
+  invalidation complete.
+- Searched the four application log groups for the most recent hour and found
+  no email address, JWT, `Authorization` header, signed-request field or
+  Cognito subject value.
+- Updated the Team Report draft to the deployed asynchronous architecture and
+  measured 121/23-test evidence, replacing both UI placeholders with sanitized
+  live upload and strict-AND figures. Microsoft Word reports 778 words across
+  five pages; all pages were visually reviewed, the accessibility audit found
+  no findings, and table geometry remained exact. Final live outcomes are included;
+  only member identities/contributions and final PDF export remain human-owned.
 
 ## Deployment attempts and remediation
 
@@ -100,9 +151,9 @@ Command:
 
 Latest result on 2026-08-23:
 
-- backend: 114 passed, 1 Bash-availability skip on Windows;
-- domain/application coverage: 90.12% (minimum 85%);
-- frontend: 22 passed;
+- backend: 121 passed, 1 Bash-availability skip on Windows;
+- domain/application coverage: 89.39% (minimum 85%);
+- frontend: 23 passed;
 - TypeScript, production build, ESLint and Ruff: passed;
 - cfn-lint and infrastructure assertions: passed.
 
@@ -117,11 +168,18 @@ AWS CloudShell.
 | Same-name root stack retry | PASS | `docs/evidence/LIVE_STACK_ACCEPTANCE.txt` |
 | Read-only stack acceptance | PASS (10 labels) | `docs/evidence/LIVE_STACK_ACCEPTANCE.txt` |
 | Frontend deployment and anonymous UI | PASS | `docs/evidence/live-ui/00-registration.png`, `01-login-protected.png` |
-| Cognito register/verify/login/logout | Pending human email step | Add sanitized UI screenshots |
-| Image, video, duplicate, ML, thumbnail and DynamoDB | Pending | Add live E2E result |
-| Four query modes and temporary cleanup | Pending | Add live E2E result |
-| Bulk add/remove and complete deletion | Pending | Add live E2E result |
-| SNS confirmation and watched-tag delivery | Pending human email step | Add sanitized result |
+| Cognito register/verify/login | PASS | Live verified user and authenticated SPA session; sanitized evidence only |
+| Logout and post-logout protection | PASS | Logout completed; direct Manage revisit returned to sign-in; sanitized `09-logout-protected.png` |
+| Image/video, ML, thumbnail and DynamoDB | PASS | Both records reached `READY`; image thumbnail and three video samples observed |
+| Exact-byte duplicate rejection | PASS | `docs/evidence/live-ui/05-duplicate-checksum-rejected.png` |
+| Species and strict-AND queries | PASS | `docs/evidence/live-ui/03-strict-and-manual-tag.png` |
+| Asynchronous temporary query and success cleanup | PASS | `docs/evidence/live-ui/04-temporary-query-async.png`; empty prefix and one-hour TTL verified |
+| Thumbnail URL lookup | PASS | `docs/evidence/live-ui/06-thumbnail-to-original.png` (signed/private fields visibly redacted) |
+| Temporary failure cleanup | PASS | `docs/evidence/live-ui/07-temporary-query-failure-cleanup.png`; zero S3 objects plus FAILED one-hour-TTL job observed |
+| Bulk add tag | PASS | Two selected records updated and strict-AND result observed |
+| Bulk remove/idempotency and complete deletion | PASS | Two removals plus zero-change retry; two `Deleted` outcomes plus two `Already absent` outcomes; no S3/media/dedup residue |
+| CloudWatch sensitive-field redaction | PASS | Sanitized four-log-group scan produced no matches |
+| SNS confirmation and watched-tag delivery | PASS | Manage shows `CONFIRMED`; watched-tag upload is `READY`; event claim and human inbox receipt observed |
 
 ## Cost and security boundary
 
@@ -145,13 +203,13 @@ now been observed as complete. Cost Explorer reported
 CloudFormation retention left two Cognito user pools and four generated
 media/model buckets from the two failed attempts. No retained resource was
 deleted. The accepted root stack and frontend now exist alongside those
-retained resources. The next action needs a student-controlled email address:
-register and verify a Cognito user, sign in, confirm the SNS subscription and
-run the complete image/video/query/manage/delete workflow.
+retained resources. Cognito registration, verification and sign-in are
+complete. The SNS subscription is `CONFIRMED`, a watched-tag upload created its
+notification-event claim, and the recipient observed the email. Logout and
+post-logout protection pass. The separately authorized bulk tag removal,
+permanent media deletion and both idempotency retries are complete.
 
 ## Completion criteria
 
-1. Complete the full live UI/ML workflow, including Cognito and SNS human email
-   confirmations.
-2. Save only sanitized evidence, update this report and the HD rubric audit,
-   rerun every gate, commit and push.
+1. Preserve only the sanitized evidence and rerun every gate.
+2. Commit and push Stage 6.3, then create the final handoff stage.

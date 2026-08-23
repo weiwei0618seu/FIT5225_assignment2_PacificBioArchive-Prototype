@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "observed_at_utc": "2026-08-23T09:04:17Z",
+  "deployment_region": "ap-southeast-2",
+  "model_image_digest": "sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3",
+  "checks": [
+    {
+      "id": "protected_route_redirect",
+      "status": "PASS",
+      "source": "UI",
+      "note": "An unauthenticated protected-page visit displayed the native sign-in screen."
+    },
+    {
+      "id": "unauthenticated_api_401",
+      "status": "PASS",
+      "source": "API",
+      "note": "A direct anonymous request to the protected health route returned HTTP 401."
+    },
+    {
+      "id": "cognito_register_verify_signin",
+      "status": "PASS",
+      "source": "UI",
+      "note": "Native registration, email-code verification and authenticated sign-in completed."
+    },
+    {
+      "id": "image_upload_ready",
+      "status": "PASS",
+      "source": "UI",
+      "note": "A supplied wildlife image uploaded through the private workflow and reached READY."
+    },
+    {
+      "id": "model_prediction_and_confidence",
+      "status": "PASS",
+      "source": "UI",
+      "note": "The supplied model produced the expected species count and confidence evidence."
+    },
+    {
+      "id": "thumbnail_render",
+      "status": "PASS",
+      "source": "UI",
+      "note": "The READY image displayed its generated proportional thumbnail and original action."
+    },
+    {
+      "id": "duplicate_checksum_rejected",
+      "status": "PASS",
+      "source": "UI",
+      "note": "Uploading identical bytes was rejected by checksum before a duplicate object was stored."
+    },
+    {
+      "id": "video_one_fps",
+      "status": "PASS",
+      "source": "UI",
+      "note": "A three-second supplied test video reached READY with exactly three sampled frames."
+    },
+    {
+      "id": "species_query",
+      "status": "PASS",
+      "source": "UI",
+      "note": "The detected species query returned the qualifying image and video records."
+    },
+    {
+      "id": "strict_and_query",
+      "status": "PASS",
+      "source": "UI",
+      "note": "Two minimum-count rows used strict AND and returned exactly both qualifying records."
+    },
+    {
+      "id": "thumbnail_to_original",
+      "status": "PASS",
+      "source": "UI",
+      "note": "A private thumbnail reference resolved to the corresponding original action."
+    },
+    {
+      "id": "temporary_query",
+      "status": "PASS",
+      "source": "UI",
+      "note": "A temporary image query progressed asynchronously from PROCESSING to READY and matched existing media."
+    },
+    {
+      "id": "temporary_success_cleanup",
+      "status": "PASS",
+      "source": "AWS",
+      "note": "Successful temporary queries left zero temporary S3 objects and stored one-hour job TTLs."
+    },
+    {
+      "id": "temporary_failure_cleanup",
+      "status": "PASS",
+      "source": "AWS",
+      "note": "A forced decode failure reached FAILED, left zero temporary objects and retained a one-hour diagnostic TTL."
+    },
+    {
+      "id": "bulk_tag_add",
+      "status": "PASS",
+      "source": "UI",
+      "note": "One bulk operation added the normalized manual tag across two selected media records."
+    },
+    {
+      "id": "bulk_tag_remove",
+      "status": "PASS",
+      "source": "UI",
+      "note": "One bulk operation removed the manual tag from both selected media records."
+    },
+    {
+      "id": "absent_tag_remove_idempotent",
+      "status": "PASS",
+      "source": "UI",
+      "note": "Repeating the same tag removal completed successfully with zero tag changes."
+    },
+    {
+      "id": "complete_delete",
+      "status": "PASS",
+      "source": "AWS",
+      "note": "Both media outcomes were Deleted and no related S3 object, media item or checksum reservation remained."
+    },
+    {
+      "id": "delete_retry_idempotent",
+      "status": "PASS",
+      "source": "UI",
+      "note": "Repeating deletion for both identifiers returned Already absent without an error."
+    },
+    {
+      "id": "sns_watched_tag_delivery",
+      "status": "PASS",
+      "source": "EMAIL",
+      "note": "A confirmed subscriber received the watched-species message after a real READY upload."
+    },
+    {
+      "id": "sign_out_blocks_access",
+      "status": "PASS",
+      "source": "UI",
+      "note": "After logout, a direct visit to the protected Manage route returned to the sign-in screen."
+    },
+    {
+      "id": "cloudwatch_redaction",
+      "status": "PASS",
+      "source": "AWS",
+      "note": "A recent four-log-group scan found no email, token, authorization header, signed-request field or user subject."
+    }
+  ],
+  "human_confirmations": [
+    {
+      "id": "cognito_email_verification",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "sns_subscription_confirmation",
+      "status": "CONFIRMED"
+    },
+    {
+      "id": "sns_watched_tag_delivery",
+      "status": "OBSERVED"
+    }
+  ]
+}
