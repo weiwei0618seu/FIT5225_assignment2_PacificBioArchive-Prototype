@@ -26,13 +26,18 @@ export function OriginalPreviewDialog({ url, title, mediaType, onClose }: Props)
   }, [onClose]);
 
   return (
-    <div className="preview-backdrop" role="presentation" onMouseDown={onClose}>
+    <div
+      className="preview-backdrop"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <section
         className="preview-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="original-preview-title"
-        onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="preview-panel__header">
           <div>

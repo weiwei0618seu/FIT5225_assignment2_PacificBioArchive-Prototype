@@ -58,9 +58,14 @@ describe("query UI", () => {
     await user.click(screen.getByRole("tab", { name: /thumbnail find original/i }));
     await user.type(screen.getByLabelText(/thumbnail url or key/i), "thumbnails/ready-1.jpg");
     await user.click(screen.getByRole("button", { name: /find original/i }));
-    await user.click(await screen.findByRole("button", { name: /open original/i }));
+    const openOriginal = await screen.findByRole("button", { name: /open original/i });
+    expect(openOriginal.tagName).toBe("BUTTON");
+    await user.click(openOriginal);
     expect(screen.getByRole("dialog", { name: /file ready-1/i })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /original preview/i })).toHaveAttribute("src", "https://example.test/full");
+    const preview = screen.getByRole("img", { name: /original preview/i });
+    expect(preview).toHaveAttribute("src", "https://example.test/full");
+    await user.click(preview);
+    expect(screen.getByRole("dialog", { name: /file ready-1/i })).toBeInTheDocument();
   });
 
   it("runs a temporary image query and displays detected counts", async () => {

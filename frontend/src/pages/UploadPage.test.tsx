@@ -46,9 +46,14 @@ describe("upload workflow UI", () => {
     expect(workflow.uploadAndWait).toHaveBeenCalledWith(file, expect.any(Function));
     expect(await screen.findByRole("heading", { name: /your media is ready/i })).toBeInTheDocument();
     expect(screen.getByText("dingo", { selector: "dt" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /open original/i }));
+    const openOriginal = screen.getByRole("button", { name: /open original/i });
+    expect(openOriginal.tagName).toBe("BUTTON");
+    await user.click(openOriginal);
     expect(screen.getByRole("dialog", { name: /dingo\.jpg/i })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /original preview/i })).toHaveAttribute("src", readyMedia.original_url);
+    const preview = screen.getByRole("img", { name: /original preview/i });
+    expect(preview).toHaveAttribute("src", readyMedia.original_url);
+    await user.click(preview);
+    expect(screen.getByRole("dialog", { name: /dingo\.jpg/i })).toBeInTheDocument();
   });
 
   it("rejects an unsupported file before calling the API", async () => {
