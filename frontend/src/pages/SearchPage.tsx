@@ -7,6 +7,7 @@ import {
 } from "../api/client";
 import type { QueryResponse, TemporaryQueryResponse, ThumbnailLookup } from "../api/types";
 import { MediaResults } from "../components/MediaResults";
+import { OriginalPreviewDialog } from "../components/OriginalPreviewDialog";
 import { StatusMessage } from "../components/StatusMessage";
 import {
   ACCEPTED_QUERY_TYPES,
@@ -40,6 +41,7 @@ export function SearchPage() {
   const [results, setResults] = useState<QueryResponse | null>(null);
   const [tempResult, setTempResult] = useState<TemporaryQueryResponse | null>(null);
   const [thumbnailResult, setThumbnailResult] = useState<ThumbnailLookup | null>(null);
+  const [previewingThumbnailOriginal, setPreviewingThumbnailOriginal] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -47,6 +49,7 @@ export function SearchPage() {
     setResults(null);
     setTempResult(null);
     setThumbnailResult(null);
+    setPreviewingThumbnailOriginal(false);
     setError("");
   }
 
@@ -164,7 +167,15 @@ export function SearchPage() {
         {error && <StatusMessage tone="error">{error}</StatusMessage>}
       </section>
 
-      {thumbnailResult && <section className="lookup-result"><div><p className="eyebrow">Original located</p><h2>File {thumbnailResult.file_id}</h2></div><a className="button button--primary" href={thumbnailResult.original_url} target="_blank" rel="noreferrer">Open original</a></section>}
+      {thumbnailResult && <section className="lookup-result"><div><p className="eyebrow">Original located</p><h2>File {thumbnailResult.file_id}</h2></div><button className="button button--primary" type="button" onClick={() => setPreviewingThumbnailOriginal(true)}>Open original</button></section>}
+      {previewingThumbnailOriginal && thumbnailResult && (
+        <OriginalPreviewDialog
+          url={thumbnailResult.original_url}
+          title={`File ${thumbnailResult.file_id}`}
+          mediaType="image"
+          onClose={() => setPreviewingThumbnailOriginal(false)}
+        />
+      )}
       {tempResult && <section className="detected-summary"><div><p className="eyebrow">Query image detected</p><h2>{Object.keys(tempResult.detected_species_counts).join(", ") || "No species"}</h2></div><dl>{Object.entries(tempResult.detected_species_counts).map(([tag, count]) => <div key={tag}><dt>{tag}</dt><dd>{count}</dd></div>)}</dl><small>Model {tempResult.model_version || "not reported"}</small></section>}
       {results && <MediaResults media={results.media} total={results.total} truncated={results.truncated} />}
     </main>

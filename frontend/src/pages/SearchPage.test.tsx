@@ -58,7 +58,9 @@ describe("query UI", () => {
     await user.click(screen.getByRole("tab", { name: /thumbnail find original/i }));
     await user.type(screen.getByLabelText(/thumbnail url or key/i), "thumbnails/ready-1.jpg");
     await user.click(screen.getByRole("button", { name: /find original/i }));
-    expect(await screen.findByRole("link", { name: /open original/i })).toHaveAttribute("href", "https://example.test/full");
+    await user.click(await screen.findByRole("button", { name: /open original/i }));
+    expect(screen.getByRole("dialog", { name: /file ready-1/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /original preview/i })).toHaveAttribute("src", "https://example.test/full");
   });
 
   it("runs a temporary image query and displays detected counts", async () => {
