@@ -3,7 +3,7 @@
   "status": "PASS",
   "observed_at_utc": "2026-08-23T09:04:17Z",
   "deployment_region": "ap-southeast-2",
-  "model_image_digest": "sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3",
+  "model_image_digest": "sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31",
   "checks": [
     {
       "id": "protected_route_redirect",

@@ -23,7 +23,7 @@ The formal Group 8 repository was not changed.
   Cognito-protected API are live.
 - The supplied detector/classifier is reused without retraining in immutable
   Lambda image digest
-  `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`.
+  `sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31`.
 - Live acceptance covers native registration/verification/sign-in, protected
   routing, image and three-frame video processing, thumbnail generation,
   checksum deduplication, all four query modes, asynchronous temporary-query
@@ -32,10 +32,10 @@ The formal Group 8 repository was not changed.
   checks.
 - `docs/evidence/LIVE_E2E.json` records 22 required checks as `PASS` and three
   human confirmations. Its SHA-256 is
-  `516F3325893C83947AC3D6B382274D0C554305939DDACBE316543D77C1D48803`.
+  `27F6E6B040BC070E73EDF28766DD1F6DDDCFA93057F8ED5B3A6C13F2C61DFEB5`.
 - `docs/evidence/LIVE_STACK_ACCEPTANCE.txt` records all ten sanitized live
   infrastructure checks. Its SHA-256 is
-  `DFF7C42B68706810D8F6D1A5E74D46E14352ACA36D82CFB34273983AEDB9AE0B`.
+  `FCACC4E2A94A759CF6B6646C8E2F3A7FDBE020541B5D0898684B34AF33A918B9`.
 - The AWS design remains bounded and serverless: private encrypted S3,
   on-demand encrypted DynamoDB, bounded Lambda, seven-day logs, API throttling
   and no EC2, NAT Gateway, RDS, OpenSearch, SageMaker, EFS or WAF resources.
@@ -45,7 +45,7 @@ The formal Group 8 repository was not changed.
 
 ## Measured final gates
 
-Observed on 2026-08-23:
+Observed on 2026-09-09:
 
 | Gate | Result |
 |---|---|

@@ -26,7 +26,7 @@ Reports and final submission.
    ```
 
 3. Check that the model digest remains
-   `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`
+   `sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31`
    and that the Sydney stack is still `CREATE_COMPLETE` or `UPDATE_COMPLETE`.
 4. Rehearse `docs/DEMO_PLAN.md` with all four members before making any live
    changes.

@@ -34,9 +34,9 @@ evidence exist but a submission or rehearsal action remains human-owned;
 - frontend: 23 passed; TypeScript, Vitest, build and ESLint pass;
 - CloudFormation: cfn-lint pass; infrastructure security assertions pass;
 - real supplied model: three expected fixtures pass locally and in Linux;
-- immutable ECR publish: workflow run `32601871666`, job `97101257587`,
-  immutable digest `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`,
-  successful;
+- immutable ECR publish: workflow run `34317644832`, job `102357119458`,
+  immutable digest `sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31`,
+  successful after the rerun-safe image tag fix;
 - deployment toolchain: workflow run `32610702537`, job `97123189935`,
   official SAM Python 3.12 image, container build and pnpm 11.19.0 frontend
   build successful; failed root-stack record deletion waiter returned zero;

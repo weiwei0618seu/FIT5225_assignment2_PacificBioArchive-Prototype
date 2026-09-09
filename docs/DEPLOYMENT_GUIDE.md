@@ -30,7 +30,7 @@ assessment. Do not run cleanup commands during a demo.
 The verified Stage 6.3 image is:
 
 ```text
-835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3
+835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31
 ```
 
 ## 1. Validate locally
@@ -69,7 +69,7 @@ Choose a globally unique lowercase Cognito prefix. The current Prototype uses
 ```bash
 export PBA_CONFIRM_FREE_PLAN='US$0'
 export PBA_HOSTED_UI_DOMAIN_PREFIX='pba-prototype-835597620771'
-export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3'
+export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31'
 bash infrastructure/scripts/deploy-core.sh
 ```
 
@@ -97,7 +97,7 @@ Prepare a change set without executing it:
 ```bash
 export PBA_CONFIRM_FREE_PLAN='US$0'
 export PBA_HOSTED_UI_DOMAIN_PREFIX='pba-prototype-835597620771'
-export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3'
+export PBA_ML_IMAGE_URI='835597620771.dkr.ecr.ap-southeast-2.amazonaws.com/pacific-bioarchive-prototype-ml@sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31'
 export PBA_PREBUILT_SAM_ARCHIVE="$HOME/sam-python312-build.tar.gz"
 export PBA_PREBUILT_SAM_SHA256="$(cut -d ' ' -f 1 "$HOME/sam-python312-build.tar.gz.sha256")"
 export PBA_DEPLOY_MODE='prepare'

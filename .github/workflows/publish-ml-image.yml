@@ -133,7 +133,7 @@ jobs:
           REPOSITORY_URI: ${{ env.PBA_ECR_REPOSITORY_URI }}
         run: |
           registry="${REPOSITORY_URI%/*}"
-          image_tag="git-${GITHUB_SHA}"
+          image_tag="git-${GITHUB_SHA}-${GITHUB_RUN_ATTEMPT}"
           aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "$registry"
           docker tag "pacific-bioarchive-ml:${GITHUB_SHA}" "${REPOSITORY_URI}:${image_tag}"
           docker push "${REPOSITORY_URI}:${image_tag}"

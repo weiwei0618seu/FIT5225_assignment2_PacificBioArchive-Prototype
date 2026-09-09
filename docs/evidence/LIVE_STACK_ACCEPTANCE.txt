@@ -1,5 +1,5 @@
 Pacific BioArchive live stack acceptance
-Observed date: 2026-08-23
+Observed date: 2026-09-09
 Region: ap-southeast-2
 AWS account: 835597620771
 Stack: pacific-bioarchive-prototype
@@ -11,6 +11,9 @@ Observed deployment controls
 - The root and nested templates contained no excluded high-cost service type.
 - Google federation remained disabled and CreateCostBudget remained disabled.
 - The ML image parameter used the verified immutable Sydney ECR digest.
+- On 2026-09-09 the ML image was republished after the prior digest was
+  removed from ECR. CloudFormation was updated to the refreshed immutable
+  digest and both ML Lambdas returned to Active/Successful state.
 - The same-name root stack first reached CREATE_COMPLETE, then UPDATE_COMPLETE
   after the no-replacement asynchronous temporary-query update.
 - The frontend production archive SHA-256 was verified before S3 synchronization.

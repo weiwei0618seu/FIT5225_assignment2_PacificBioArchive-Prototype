@@ -18,7 +18,9 @@ The deployment remains restricted to the Prototype repository and
   credentials. Workflow run `32601871666`, job `97101257587`, succeeded for
   commit `b42dc43c65031aa0e5b2d2175a2467f0cda60b0d`.
 - Bound both ML Lambdas to immutable ECR digest
-  `sha256:1d67986a6dff37ba8a71830d84847b35e91e86bb6b1fe9a83e913a9ba2f7cef3`.
+  `sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31`
+  after republishing the supplied-model image through rerun-safe GitHub
+  Actions tag `git-<commit>-<run_attempt>`.
 - Restricted OIDC trust to the private repository's immutable owner/repository
   IDs, the Stage 6.3 branch and `sts.amazonaws.com` audience.
 - Observed and retained two honest failed root-stack deployments:
@@ -123,6 +125,13 @@ The deployment remains restricted to the Prototype repository and
 - Searched the four application log groups for the most recent hour and found
   no email address, JWT, `Authorization` header, signed-request field or
   Cognito subject value.
+- On 2026-09-09, fixed a deleted ECR image reference by publishing a refreshed
+  supplied-model image in GitHub Actions run `34317644832`, updating the stack
+  parameter to digest
+  `sha256:c51c7685bbafcff84baa42e2c5622f7d4503c731b43f2b9a4f7a3ee0ef755e31`,
+  and replaying the affected S3 event. The media processor returned
+  `processed: 1`, the restored record reached `READY`, and both ML Lambdas were
+  `Active` with `LastUpdateStatus: Successful`.
 - Updated the Team Report draft to the deployed asynchronous architecture and
   measured 121/23-test evidence, replacing both UI placeholders with sanitized
   live upload and strict-AND figures. Microsoft Word reports 778 words across
